@@ -1,0 +1,282 @@
+import { useState } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useStore } from '../data/store'
+
+export function Icon({ name, fill = false, className = '' }) {
+  return (
+    <span className={`icon ${fill ? 'fill' : ''} ${className}`} aria-hidden="true">
+      {name}
+    </span>
+  )
+}
+
+export function Logo({ className = 'w-9 h-9' }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <rect x="22" y="6" width="20" height="52" rx="8" fill="#4a90d6" />
+      <rect x="6" y="22" width="52" height="20" rx="8" fill="#4a90d6" />
+      <path d="M32 40l-6.5-6.4a4.2 4.2 0 016-6l.5.5.5-.5a4.2 4.2 0 016 6z" fill="#fcdc84" />
+    </svg>
+  )
+}
+
+export function Avatar({ hijo, size = 'w-12 h-12', texto = 'text-lg' }) {
+  if (hijo?.foto) return <img src={hijo.foto} alt="" className={`${size} rounded-full object-cover`} />
+  const tonos = ['bg-tertiary-fixed text-tertiary', 'bg-primary-fixed text-primary', 'bg-secondary-container text-on-secondary-container']
+  const i = hijo ? hijo.nombre.charCodeAt(0) % tonos.length : 0
+  return (
+    <div className={`${size} ${texto} ${tonos[i]} rounded-full flex items-center justify-center font-display font-bold shrink-0`}>
+      {hijo?.nombre?.[0] ?? '?'}
+    </div>
+  )
+}
+
+export function TopBar({ volver }) {
+  const { hijos, hijoActivo, setHijoActivoId } = useStore()
+  const [abierto, setAbierto] = useState(false)
+  const navigate = useNavigate()
+  return (
+    <header className="fixed top-0 inset-x-0 z-40 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(74,144,226,0.08)] pt-safe">
+      <div className="h-16 max-w-xl mx-auto px-5 flex items-center justify-between gap-3">
+        {volver ? (
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-primary font-semibold -ml-2 p-2 rounded-full">
+            <Icon name="arrow_back" /> Volver
+          </button>
+        ) : (
+          <Link to="/" className="flex items-center gap-2">
+            <Logo />
+            <span className="font-display font-bold text-2xl text-primary tracking-tight">Kindred Care</span>
+          </Link>
+        )}
+        {hijoActivo && (
+          <div className="relative">
+            <button onClick={() => setAbierto((a) => !a)} className="flex items-center gap-1 rounded-full pl-1 pr-2 py-1 bg-surface-container" aria-label="Cambiar de hijo">
+              <Avatar hijo={hijoActivo} size="w-9 h-9" texto="text-sm" />
+              <Icon name="expand_more" className="text-on-surface-variant" />
+            </button>
+            {abierto && (
+              <div className="absolute right-0 mt-2 w-56 bg-surface-lowest rounded-2xl shadow-soft p-2 border border-surface-high">
+                {hijos.map((h) => (
+                  <button
+                    key={h.id}
+                    onClick={() => {
+                      setHijoActivoId(h.id)
+                      setAbierto(false)
+                    }}
+                    className={`w-full flex items-center gap-3 p-2 rounded-xl text-left ${h.id === hijoActivo.id ? 'bg-surface-container' : ''}`}
+                  >
+                    <Avatar hijo={h} size="w-9 h-9" texto="text-sm" />
+                    <span className="font-semibold">{h.nombre}</span>
+                    {h.id === hijoActivo.id && <Icon name="check" className="ml-auto text-primary" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </header>
+  )
+}
+
+const pestanas = [
+  { to: '/', icon: 'grid_view', texto: 'Inicio', end: true },
+  { to: '/perfil', icon: 'medical_information', texto: 'Perfil' },
+  { to: '/tratamientos', icon: 'prescriptions', texto: 'Tratamientos' },
+  { to: '/visitas', icon: 'calendar_month', texto: 'Visitas' },
+]
+
+export function BottomNav() {
+  return (
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-surface-lowest/95 backdrop-blur-xl border-t border-surface-high pb-safe">
+      <div className="max-w-xl mx-auto grid grid-cols-4 gap-1 px-2 py-2">
+        {pestanas.map((p) => (
+          <NavLink
+            key={p.to}
+            to={p.to}
+            end={p.end}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center gap-0.5 rounded-2xl py-2 text-xs font-medium transition-colors ${
+                isActive ? 'bg-primary-container text-white' : 'text-on-surface-variant'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon name={p.icon} fill={isActive} className="text-2xl" />
+                {p.texto}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
+export function Pagina({ titulo, subtitulo, volver = false, children, accion }) {
+  return (
+    <>
+      <TopBar volver={volver} />
+      <main className="max-w-xl mx-auto px-5 pt-24 pb-32">
+        {titulo && (
+          <div className="mb-6">
+            <h1 className="text-[28px] leading-9 font-bold">{titulo}</h1>
+            {subtitulo && <p className="text-on-surface-variant mt-1">{subtitulo}</p>}
+          </div>
+        )}
+        {children}
+      </main>
+      {accion}
+      <BottomNav />
+    </>
+  )
+}
+
+export function Card({ children, className = '', ...props }) {
+  return (
+    <div className={`bg-surface-lowest rounded-3xl shadow-soft p-5 ${className}`} {...props}>
+      {children}
+    </div>
+  )
+}
+
+export function Seccion({ icono, titulo, accion, children, className = '' }) {
+  return (
+    <section className={`mb-6 ${className}`}>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          {icono && <Icon name={icono} className="text-primary" />}
+          {titulo}
+        </h2>
+        {accion}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+export function Boton({ children, variante = 'primario', className = '', icono, ...props }) {
+  const estilos = {
+    primario: 'bg-primary text-white shadow-float active:shadow-none',
+    secundario: 'bg-surface-container text-primary border-2 border-primary-fixed-dim',
+    suave: 'bg-surface-container text-primary',
+    peligro: 'bg-error-container text-on-error-container',
+  }
+  return (
+    <button
+      className={`min-h-12 rounded-full px-6 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition ${estilos[variante]} ${className}`}
+      {...props}
+    >
+      {icono && <Icon name={icono} />}
+      {children}
+    </button>
+  )
+}
+
+export function Fab({ icono = 'add', onClick, to, etiqueta }) {
+  const clases =
+    'fixed z-30 bottom-28 right-5 w-16 h-16 rounded-full bg-primary text-white shadow-float flex items-center justify-center active:scale-95 transition'
+  if (to)
+    return (
+      <Link to={to} className={clases} aria-label={etiqueta}>
+        <Icon name={icono} className="text-3xl" />
+      </Link>
+    )
+  return (
+    <button onClick={onClick} className={clases} aria-label={etiqueta}>
+      <Icon name={icono} className="text-3xl" />
+    </button>
+  )
+}
+
+export function Campo({ etiqueta, icono, children, className = '' }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="block text-sm font-semibold mb-1.5">{etiqueta}</span>
+      <div className="relative">
+        {icono && <Icon name={icono} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />}
+        {children}
+      </div>
+    </label>
+  )
+}
+
+export function Chip({ activo, children, onClick, className = '' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-10 px-4 rounded-full text-sm font-semibold whitespace-nowrap transition ${
+        activo ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'
+      } ${className}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function Interruptor({ activo, onChange, etiqueta }) {
+  return (
+    <label className="flex items-center justify-between gap-4 min-h-12 cursor-pointer">
+      <span className="font-medium">{etiqueta}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={activo}
+        onClick={() => onChange(!activo)}
+        className={`w-14 h-8 rounded-full relative transition-colors shrink-0 ${activo ? 'bg-primary' : 'bg-outline-variant'}`}
+      >
+        <span className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow transition-all ${activo ? 'left-7' : 'left-1'}`} />
+      </button>
+    </label>
+  )
+}
+
+const estilosEstado = {
+  activo: 'bg-secondary-container text-on-secondary-container',
+  por_vencer: 'bg-tertiary-fixed text-tertiary',
+  vencido: 'bg-error-container text-on-error-container',
+  pendiente: 'bg-primary-fixed text-primary',
+  finalizado: 'bg-surface-highest text-on-surface-variant',
+}
+
+export function EtiquetaEstado({ estado }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${estilosEstado[estado.clave]}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+      {estado.texto}
+    </span>
+  )
+}
+
+export function Aviso({ children }) {
+  return (
+    <div className="fixed bottom-28 inset-x-5 z-50 max-w-md mx-auto bg-inverse-surface bg-[#23323f] text-white rounded-2xl px-5 py-4 shadow-float flex items-center gap-3">
+      <Icon name="check_circle" className="text-secondary-container" fill />
+      {children}
+    </div>
+  )
+}
+
+export function useAviso() {
+  const [texto, setTexto] = useState(null)
+  const mostrar = (t) => {
+    setTexto(t)
+    setTimeout(() => setTexto(null), 2200)
+  }
+  return [texto ? <Aviso>{texto}</Aviso> : null, mostrar]
+}
+
+export function Vacio({ icono, titulo, texto, children }) {
+  return (
+    <div className="text-center py-10 px-6">
+      <div className="w-20 h-20 mx-auto rounded-full bg-surface-container flex items-center justify-center mb-4">
+        <Icon name={icono} className="text-4xl text-primary" />
+      </div>
+      <h3 className="text-xl font-semibold mb-1">{titulo}</h3>
+      {texto && <p className="text-on-surface-variant mb-4">{texto}</p>}
+      {children}
+    </div>
+  )
+}
