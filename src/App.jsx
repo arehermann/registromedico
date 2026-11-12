@@ -45,8 +45,8 @@ export default function App() {
     <StoreProvider>
       <HashRouter>
         <ScrollArriba />
-        <Recordatorios />
         <ErrorPantalla>
+          <Recordatorios />
           <Cargando>
             <Routes>
               <Route path="/" element={<Inicio />} />

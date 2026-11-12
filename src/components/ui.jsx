@@ -4,7 +4,7 @@ import { useStore } from '../data/store'
 
 export function Icon({ name, fill = false, className = '' }) {
   return (
-    <span className={`icon ${fill ? 'fill' : ''} ${className}`} aria-hidden="true">
+    <span className={`icon notranslate ${fill ? 'fill' : ''} ${className}`} translate="no" aria-hidden="true">
       {name}
     </span>
   )
