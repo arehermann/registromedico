@@ -14,14 +14,17 @@ export function StoreProvider({ children }) {
   const [proveedores, setProveedores] = useState(ejemplo.PROVEEDORES)
   const [hijoActivoId, setHijoActivoIdEstado] = useState(null)
   const [cargado, setCargado] = useState(false)
+  const [errorCarga, setErrorCarga] = useState(null)
 
   useEffect(() => {
-    leerTodo().then((d) => {
-      setDatos(Object.fromEntries(COLECCIONES.map((c) => [c, d[c]])))
-      if (d.ajustes.proveedores) setProveedores(d.ajustes.proveedores)
-      setHijoActivoIdEstado(d.ajustes.hijoActivoId ?? null)
-      setCargado(true)
-    })
+    leerTodo()
+      .then((d) => {
+        setDatos(Object.fromEntries(COLECCIONES.map((c) => [c, d[c]])))
+        if (d.ajustes.proveedores) setProveedores(d.ajustes.proveedores)
+        setHijoActivoIdEstado(d.ajustes.hijoActivoId ?? null)
+        setCargado(true)
+      })
+      .catch((e) => setErrorCarga(e?.message ?? String(e)))
     pedirPersistencia()
   }, [])
 
@@ -66,6 +69,7 @@ export function StoreProvider({ children }) {
 
     return {
       cargado,
+      errorCarga,
       datos,
       hijos,
       tratamientos: deHijosVivos('tratamientos'),
@@ -143,7 +147,7 @@ export function StoreProvider({ children }) {
         hijos.filter((h) => h.ejemplo).forEach((h) => eliminarHijo(h.id))
       },
     }
-  }, [datos, proveedores, hijoActivoId, cargado, escribir, setHijoActivoId])
+  }, [datos, proveedores, hijoActivoId, cargado, errorCarga, escribir, setHijoActivoId])
 
   return <StoreContext.Provider value={valor}>{children}</StoreContext.Provider>
 }

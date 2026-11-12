@@ -1,12 +1,13 @@
+import { clientsClaim } from 'workbox-core'
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 
 // Guarda la app completa en el celular para que abra sin internet
 cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
 
-self.addEventListener('message', (e) => {
-  if (e.data?.tipo === 'actualizar') self.skipWaiting()
-})
+// Una versión nueva toma el control enseguida, sin esperar a que se cierren todas las pestañas
+self.skipWaiting()
+clientsClaim()
 
 // Botones "Tomada" / "Posponer 15 min" de la notificación de medicación
 self.addEventListener('notificationclick', (e) => {

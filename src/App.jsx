@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { StoreProvider, useStore } from './data/store'
 import Inicio from './pages/Inicio'
@@ -28,13 +28,29 @@ function ConHijo({ children }) {
   return hijoActivo ? children : <Navigate to="/" replace />
 }
 
-// Mientras se leen los datos guardados (es casi instantáneo) se muestra el logo
+// Mientras se leen los datos guardados (es casi instantáneo) se muestra el logo.
+// Si tarda, se explica qué pasa en vez de dejar la pantalla vacía.
 function Cargando({ children }) {
-  const { cargado } = useStore()
+  const { cargado, errorCarga } = useStore()
+  const [lento, setLento] = useState(false)
+  useEffect(() => {
+    const id = setTimeout(() => setLento(true), 3000)
+    return () => clearTimeout(id)
+  }, [])
   if (cargado) return children
   return (
-    <div className="min-h-dvh flex items-center justify-center">
+    <div className="min-h-dvh flex flex-col items-center justify-center gap-4 px-8 text-center">
       <Logo className="w-16 h-16 animate-pulse" />
+      {(lento || errorCarga) && (
+        <>
+          <p className="text-on-surface-variant">
+            {errorCarga ? `No se pudieron leer los datos guardados (${errorCarga}).` : 'Está tardando en abrir los datos guardados. Si tenés la app abierta en otra pestaña, cerrala.'}
+          </p>
+          <button onClick={() => location.reload()} className="min-h-12 px-6 rounded-full bg-primary text-white font-semibold">
+            Volver a cargar
+          </button>
+        </>
+      )}
     </div>
   )
 }

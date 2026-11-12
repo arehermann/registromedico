@@ -11,6 +11,11 @@ const dbPromesa = openDB('kindred-care', 1, {
     for (const c of COLECCIONES) db.createObjectStore(c, { keyPath: 'id' })
     db.createObjectStore('ajustes')
   },
+  // Otra pestaña con una versión nueva necesita la base: soltarla y recargar para no trabarla
+  blocking() {
+    dbPromesa.then((db) => db.close())
+    location.reload()
+  },
 })
 
 export async function leerTodo() {
