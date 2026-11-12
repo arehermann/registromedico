@@ -13,6 +13,7 @@ import NuevoSintoma from './pages/NuevoSintoma'
 import Respaldo from './pages/Respaldo'
 import Configuracion from './pages/Configuracion'
 import Recordatorios from './components/Recordatorios'
+import ErrorPantalla from './components/ErrorPantalla'
 import { Logo } from './components/ui'
 
 function ScrollArriba() {
@@ -45,71 +46,73 @@ export default function App() {
       <HashRouter>
         <ScrollArriba />
         <Recordatorios />
-        <Cargando>
-          <Routes>
-            <Route path="/" element={<Inicio />} />
-            <Route path="/hijo/nuevo" element={<NuevoHijo />} />
-            <Route
-              path="/hijo/editar"
-              element={
-                <ConHijo>
-                  <NuevoHijo editar />
-                </ConHijo>
-              }
-            />
-            <Route
-              path="/perfil"
-              element={
-                <ConHijo>
-                  <Perfil />
-                </ConHijo>
-              }
-            />
-            <Route
-              path="/tratamientos"
-              element={
-                <ConHijo>
-                  <Tratamientos />
-                </ConHijo>
-              }
-            />
-            <Route
-              path="/tratamientos/nuevo"
-              element={
-                <ConHijo>
-                  <NuevoTratamiento />
-                </ConHijo>
-              }
-            />
-            <Route
-              path="/visitas"
-              element={
-                <ConHijo>
-                  <Visitas />
-                </ConHijo>
-              }
-            />
-            <Route
-              path="/visitas/nueva"
-              element={
-                <ConHijo>
-                  <NuevaVisita />
-                </ConHijo>
-              }
-            />
-            <Route path="/sintomas" element={<Sintomas />} />
-            <Route
-              path="/sintomas/nuevo"
-              element={
-                <ConHijo>
-                  <NuevoSintoma />
-                </ConHijo>
-              }
-            />
-            <Route path="/respaldo" element={<Respaldo />} />
-            <Route path="/configuracion" element={<Configuracion />} />
-          </Routes>
-        </Cargando>
+        <ErrorPantalla>
+          <Cargando>
+            <Routes>
+              <Route path="/" element={<Inicio />} />
+              <Route path="/hijo/nuevo" element={<NuevoHijo />} />
+              <Route
+                path="/hijo/editar"
+                element={
+                  <ConHijo>
+                    <NuevoHijo editar />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/perfil"
+                element={
+                  <ConHijo>
+                    <Perfil />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/tratamientos"
+                element={
+                  <ConHijo>
+                    <Tratamientos />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/tratamientos/nuevo"
+                element={
+                  <ConHijo>
+                    <NuevoTratamiento />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/visitas"
+                element={
+                  <ConHijo>
+                    <Visitas />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/visitas/nueva"
+                element={
+                  <ConHijo>
+                    <NuevaVisita />
+                  </ConHijo>
+                }
+              />
+              <Route path="/sintomas" element={<Sintomas />} />
+              <Route
+                path="/sintomas/nuevo"
+                element={
+                  <ConHijo>
+                    <NuevoSintoma />
+                  </ConHijo>
+                }
+              />
+              <Route path="/respaldo" element={<Respaldo />} />
+              <Route path="/configuracion" element={<Configuracion />} />
+            </Routes>
+          </Cargando>
+        </ErrorPantalla>
       </HashRouter>
     </StoreProvider>
   )
