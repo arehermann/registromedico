@@ -6,6 +6,7 @@ import { openDB } from 'idb'
 
 export const COLECCIONES = ['hijos', 'tratamientos', 'visitas', 'sintomas', 'rescates', 'tomas']
 
+// Nombre interno heredado: no cambiarlo, o el celular dejaría de encontrar los datos guardados
 const dbPromesa = openDB('kindred-care', 1, {
   upgrade(db) {
     for (const c of COLECCIONES) db.createObjectStore(c, { keyPath: 'id' })

@@ -1,4 +1,4 @@
-# Kindred Care · Registro médico familiar
+# FamLog · Registro médico familiar
 
 App para que los padres lleven el control de salud de sus hijos: ficha de emergencia, tratamientos con recordatorios, historia clínica de visitas, síntomas y respaldo compartido entre padres. Pensada para funcionar 100 % offline y sin nube.
 

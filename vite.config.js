@@ -18,8 +18,8 @@ export default defineConfig({
       injectRegister: false,
       injectManifest: { globPatterns: ['**/*.{js,css,html,svg,png,woff2}'] },
       manifest: {
-        name: 'Kindred Care · Salud familiar',
-        short_name: 'Kindred Care',
+        name: 'FamLog · Salud familiar',
+        short_name: 'FamLog',
         description: 'Registro de salud de tus hijos: ficha de emergencia, tratamientos, visitas y síntomas.',
         lang: 'es-UY',
         start_url: './',

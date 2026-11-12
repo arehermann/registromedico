@@ -45,7 +45,7 @@ export function TopBar({ volver }) {
         ) : (
           <Link to="/" className="flex items-center gap-2">
             <Logo />
-            <span className="font-display font-bold text-2xl text-primary tracking-tight">Kindred Care</span>
+            <span className="font-display font-bold text-2xl text-primary tracking-tight">FamLog</span>
           </Link>
         )}
         {hijoActivo && (

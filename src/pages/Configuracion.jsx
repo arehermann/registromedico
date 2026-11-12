@@ -144,7 +144,7 @@ export default function Configuracion() {
         </Seccion>
       )}
 
-      <p className="text-center text-xs text-on-surface-variant mt-10">Kindred Care · tus datos se guardan solo en este celular</p>
+      <p className="text-center text-xs text-on-surface-variant mt-10">FamLog · tus datos se guardan solo en este celular</p>
     </Pagina>
   )
 }

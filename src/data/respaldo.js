@@ -3,6 +3,7 @@ import { COLECCIONES } from './db'
 export const VERSION_RESPALDO = 1
 
 export function armarRespaldo(datos, proveedores) {
+  // 'kindred-care' es el identificador interno de los respaldos (nombre anterior de la app); se mantiene por compatibilidad
   const r = { app: 'kindred-care', version: VERSION_RESPALDO, generado: new Date().toISOString(), proveedores }
   for (const c of COLECCIONES) r[c] = datos[c]
   return r
@@ -15,7 +16,7 @@ export function nombreArchivo() {
 }
 
 export function validarRespaldo(json) {
-  if (!json || json.app !== 'kindred-care') throw new Error('Ese archivo no es un respaldo de Kindred Care.')
+  if (!json || json.app !== 'kindred-care') throw new Error('Ese archivo no es un respaldo de FamLog.')
   if (json.version > VERSION_RESPALDO) throw new Error('El respaldo viene de una versión más nueva de la app. Actualizá la app y probá de nuevo.')
   return json
 }
