@@ -18,7 +18,10 @@ import { Logo } from './components/ui'
 
 function ScrollArriba() {
   const { pathname } = useLocation()
-  useEffect(() => window.scrollTo(0, 0), [pathname])
+  // Con llaves: en Chrome nuevo scrollTo devuelve una promesa, y React la trataría como función de limpieza
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
   return null
 }
 
