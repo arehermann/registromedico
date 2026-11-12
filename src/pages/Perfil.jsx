@@ -29,13 +29,16 @@ export default function Perfil() {
     <Pagina>
       <div className="flex items-center gap-4 mb-6">
         <Avatar hijo={h} size="w-20 h-20" texto="text-3xl" />
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-[28px] leading-9 font-bold">{h.nombre}</h1>
           <p className="text-on-surface-variant font-semibold">
             {edad(h.nacimiento)} · nació el {fechaCorta(h.nacimiento)}
           </p>
           {h.cedula && <p className="text-on-surface-variant text-sm">C.I. {h.cedula}</p>}
         </div>
+        <Link to="/hijo/editar" className="w-12 h-12 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0" aria-label="Editar ficha">
+          <Icon name="edit" />
+        </Link>
       </div>
 
       {/* Bloque de emergencia */}

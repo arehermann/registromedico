@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Avatar, Icon, Pagina } from '../components/ui'
+import { Avatar, Boton, Icon, Pagina } from '../components/ui'
+import { ActivarRecordatorios, DosisPendientes, InstalarApp } from '../components/avisos'
 import { useStore } from '../data/store'
 import { edad, hora, proximaDosis } from '../data/fechas'
 
@@ -14,7 +15,7 @@ function Dato({ icono, color, etiqueta, valor }) {
 }
 
 export default function Inicio() {
-  const { hijos, tratamientos, setHijoActivoId } = useStore()
+  const { hijos, tratamientos, setHijoActivoId, cargarEjemplo } = useStore()
   const navigate = useNavigate()
 
   const abrir = (id, ruta = '/perfil') => {
@@ -29,8 +30,36 @@ export default function Inicio() {
     .sort((a, b) => a.cuando - b.cuando)
     .slice(0, 2)
 
+  if (!hijos.length)
+    return (
+      <Pagina>
+        <InstalarApp />
+        <div className="text-center pt-6 pb-4">
+          <div className="w-24 h-24 mx-auto rounded-full bg-surface-container flex items-center justify-center mb-5">
+            <Icon name="child_care" className="text-5xl text-primary" />
+          </div>
+          <h1 className="text-[28px] leading-9 font-bold mb-2">Empecemos por tus hijos</h1>
+          <p className="text-on-surface-variant mb-8">Cargá sus datos básicos para tener la ficha de emergencia siempre a mano. Todo queda guardado solo en este celular.</p>
+          <div className="space-y-3">
+            <Boton className="w-full" icono="add" onClick={() => navigate('/hijo/nuevo')}>
+              Agregar el primer hijo
+            </Boton>
+            <Boton className="w-full" variante="suave" icono="science" onClick={cargarEjemplo}>
+              Probar con datos de ejemplo
+            </Boton>
+            <Boton className="w-full" variante="suave" icono="download" onClick={() => navigate('/respaldo')}>
+              Importar un respaldo
+            </Boton>
+          </div>
+        </div>
+      </Pagina>
+    )
+
   return (
     <Pagina titulo="Mis pacientes" subtitulo="La salud de tus hijos, siempre a mano.">
+      <InstalarApp />
+      <ActivarRecordatorios />
+      <DosisPendientes mostrarNombre />
       {proximas.length > 0 && (
         <div className="mb-6 space-y-2">
           {proximas.map(({ t, cuando }) => {

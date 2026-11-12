@@ -1,9 +1,48 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Avatar, Fab, Icon, Pagina, Vacio } from '../components/ui'
 import { useStore } from '../data/store'
 import { haceCuanto } from '../data/fechas'
 
 const ICONOS = { Fiebre: 'thermostat', Tos: 'sentiment_dissatisfied', Mocos: 'humidity_high', Vómito: 'sick', Diarrea: 'gastroenterology', Dolor: 'healing', Sarpullido: 'water_drop', Otro: 'help' }
+
+function TarjetaSintoma({ s }) {
+  const { eliminarSintoma } = useStore()
+  const [confirmar, setConfirmar] = useState(false)
+  return (
+    <div className="bg-surface-container rounded-3xl p-5">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-sm text-on-surface-variant">{haceCuanto(s.fecha)}</span>
+        <span className="flex items-center gap-1 bg-surface-lowest rounded-full px-3 py-1 text-sm font-medium">
+          <Icon name={ICONOS[s.etiqueta] ?? 'help'} className="text-base text-tertiary" /> {s.etiqueta}
+          {s.temperatura ? ` · ${String(s.temperatura).replace('.', ',')} °C` : ''}
+        </span>
+      </div>
+      <p>{s.descripcion}</p>
+      {s.medicacion && (
+        <p className="text-sm text-on-surface-variant mt-2 flex items-center gap-1">
+          <Icon name="medication" className="text-base" /> {s.medicacion.medicamento} {s.medicacion.dosis}
+        </p>
+      )}
+      <div className="flex justify-end mt-1 -mb-2">
+        {confirmar ? (
+          <div className="flex gap-2">
+            <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-surface-lowest">
+              Cancelar
+            </button>
+            <button onClick={() => eliminarSintoma(s.id)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-error text-white">
+              Eliminar
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmar(true)} className="text-on-surface-variant w-10 h-10 flex items-center justify-center" aria-label="Eliminar síntoma">
+            <Icon name="delete" />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function Sintomas() {
   const { hijos, sintomas } = useStore()
@@ -48,20 +87,7 @@ export default function Sintomas() {
             </div>
             <div className="space-y-3">
               {propios.map((s) => (
-                <div key={s.id} className="bg-surface-container rounded-3xl p-5">
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-sm text-on-surface-variant">{haceCuanto(s.fecha)}</span>
-                    <span className="flex items-center gap-1 bg-surface-lowest rounded-full px-3 py-1 text-sm font-medium">
-                      <Icon name={ICONOS[s.etiqueta] ?? 'help'} className="text-base text-tertiary" /> {s.etiqueta}
-                    </span>
-                  </div>
-                  <p>{s.descripcion}</p>
-                  {s.medicacion && (
-                    <p className="text-sm text-on-surface-variant mt-2 flex items-center gap-1">
-                      <Icon name="medication" className="text-base" /> {s.medicacion.medicamento} {s.medicacion.dosis}
-                    </p>
-                  )}
-                </div>
+                <TarjetaSintoma key={s.id} s={s} />
               ))}
             </div>
           </section>

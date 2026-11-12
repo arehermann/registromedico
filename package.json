@@ -7,17 +7,21 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "iconos": "node scripts/fuente-iconos.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
     "@fontsource/plus-jakarta-sans": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
-    "material-symbols": "^0.48.0",
+    "idb": "^8.0.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "vite-plugin-pwa": "^2.0.0",
+    "workbox-core": "^7.4.1",
+    "workbox-precaching": "^7.4.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

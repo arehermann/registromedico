@@ -16,7 +16,9 @@ function Detalle({ etiqueta, children }) {
 }
 
 function TarjetaVisita({ v, hijo, mostrarHijo }) {
+  const { eliminarVisita } = useStore()
   const [abierta, setAbierta] = useState(false)
+  const [confirmar, setConfirmar] = useState(false)
   const urgente = esUrgencia(v)
   return (
     <article className="bg-surface-lowest rounded-3xl shadow-soft p-5">
@@ -72,6 +74,22 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
             </Detalle>
           )}
           {v.proximoControl && <Detalle etiqueta="Próximo control">{v.proximoControl}</Detalle>}
+          <div className="flex justify-end pt-1">
+            {confirmar ? (
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-surface-lowest">
+                  Cancelar
+                </button>
+                <button onClick={() => eliminarVisita(v.id)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-error text-white">
+                  Eliminar visita
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmar(true)} className="text-sm font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
+                <Icon name="delete" /> Eliminar
+              </button>
+            )}
+          </div>
         </div>
       )}
     </article>

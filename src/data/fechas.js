@@ -57,8 +57,10 @@ export function proximaDosis(t) {
   if (!t.inicio || !t.cadaHoras || t.estado !== 'en_curso') return null
   const inicio = new Date(t.inicio).getTime()
   const paso = t.cadaHoras * HORA
-  const n = Math.ceil((Date.now() - inicio) / paso)
-  return new Date(inicio + Math.max(n, 0) * paso)
+  const n = Math.max(Math.ceil((Date.now() - inicio) / paso), 0)
+  const prox = inicio + n * paso
+  if (t.duracionDias && prox >= inicio + t.duracionDias * 24 * HORA) return null
+  return new Date(prox)
 }
 
 // Avance del intervalo actual entre dosis (0 a 1), para el anillo de "próxima dosis".

@@ -5,41 +5,65 @@ import { useStore } from '../data/store'
 
 const GRUPOS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
-export default function NuevoHijo() {
-  const { agregarHijo, agregarTratamiento } = useStore()
-  const navigate = useNavigate()
-  const [f, setF] = useState({
-    nombre: '',
-    cedula: '',
-    nacimiento: '',
-    peso: '',
-    altura: '',
-    grupoSanguineo: '',
-    alergias: '',
-    prematuro: false,
-    vacunasAlDia: true,
-    foto: null,
+// Achica la foto a 320 px para que el respaldo no pese de más
+function fotoReducida(archivo) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const lado = 320
+      const escala = Math.min(1, lado / Math.min(img.width, img.height))
+      const c = document.createElement('canvas')
+      c.width = Math.round(img.width * escala)
+      c.height = Math.round(img.height * escala)
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+      URL.revokeObjectURL(img.src)
+      resolve(c.toDataURL('image/jpeg', 0.82))
+    }
+    img.onerror = reject
+    img.src = URL.createObjectURL(archivo)
   })
-  const [enfermedades, setEnfermedades] = useState([])
+}
+
+export default function NuevoHijo({ editar = false }) {
+  const { hijoActivo, agregarHijo, actualizarHijo, agregarTratamiento } = useStore()
+  const navigate = useNavigate()
+  const base = editar ? hijoActivo : null
+  const [f, setF] = useState({
+    nombre: base?.nombre ?? '',
+    cedula: base?.cedula ?? '',
+    nacimiento: base?.nacimiento ?? '',
+    peso: base?.peso ? String(base.peso).replace('.', ',') : '',
+    altura: base?.altura ? String(base.altura) : '',
+    grupoSanguineo: base?.grupoSanguineo ?? '',
+    alergias: base?.alergias?.join(', ') ?? '',
+    prematuro: base?.prematuro ?? false,
+    vacunasAlDia: base?.vacunasAlDia ?? true,
+    foto: base?.foto ?? null,
+  })
+  const [enfermedades, setEnfermedades] = useState(
+    (base?.condiciones ?? []).map((c) => ({ nombre: c.nombre, anio: c.desde ?? '', medicamento: '', dosis: '', frecuencia: '' })),
+  )
   const [prolongados, setProlongados] = useState([])
   const cambiar = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  const numero = (v) => Number(String(v).replace(',', '.')) || 0
 
-  const elegirFoto = (e) => {
+  const elegirFoto = async (e) => {
     const archivo = e.target.files?.[0]
-    if (archivo) setF({ ...f, foto: URL.createObjectURL(archivo) })
+    if (archivo) setF({ ...f, foto: await fotoReducida(archivo) })
   }
 
   const guardar = (e) => {
     e.preventDefault()
-    const hijo = agregarHijo({
+    const campos = {
       ...f,
-      peso: Number(f.peso) || 0,
-      altura: Number(f.altura) || 0,
+      peso: numero(f.peso),
+      altura: numero(f.altura),
       alergias: f.alergias.split(',').map((a) => a.trim()).filter(Boolean),
       condiciones: enfermedades
         .filter((x) => x.nombre)
         .map((x) => ({ nombre: x.nombre, tipo: 'Crónica', estado: 'Controlada', desde: x.anio })),
-    })
+    }
+    const hijo = editar ? (actualizarHijo(base.id, campos), base) : agregarHijo(campos)
     // Los tratamientos de enfermedades crónicas y los prolongados quedan como crónicos sin notificaciones
     ;[...enfermedades.filter((x) => x.medicamento), ...prolongados.filter((x) => x.medicamento)].forEach((x) =>
       agregarTratamiento({
@@ -54,14 +78,14 @@ export default function NuevoHijo() {
         estado: 'en_curso',
       }),
     )
-    navigate('/perfil')
+    navigate('/perfil', { replace: editar })
   }
 
   const editarLista = (lista, setLista, i, k) => (e) =>
     setLista(lista.map((x, j) => (j === i ? { ...x, [k]: e.target.value } : x)))
 
   return (
-    <Pagina titulo="Agregar hijo" subtitulo="Estos datos forman su ficha de emergencia." volver>
+    <Pagina titulo={editar ? `Editar a ${base.nombre}` : 'Agregar hijo'} subtitulo="Estos datos forman su ficha de emergencia." volver>
       <form onSubmit={guardar} className="space-y-6">
         <label className="flex flex-col items-center gap-2 cursor-pointer">
           <span className="relative w-32 h-32 rounded-full bg-surface-high flex items-center justify-center overflow-hidden">
@@ -70,7 +94,7 @@ export default function NuevoHijo() {
               <Icon name="add" className="text-xl" />
             </span>
           </span>
-          <span className="text-primary font-semibold text-sm">Agregar foto (opcional)</span>
+          <span className="text-primary font-semibold text-sm">{f.foto ? 'Cambiar foto' : 'Agregar foto (opcional)'}</span>
           <input type="file" accept="image/*" className="hidden" onChange={elegirFoto} />
         </label>
 
@@ -117,6 +141,11 @@ export default function NuevoHijo() {
         >
           {enfermedades.map((x, i) => (
             <div key={i} className="bg-surface-low rounded-3xl p-5 space-y-4">
+              <div className="flex justify-end -mb-2">
+                <button type="button" onClick={() => setEnfermedades(enfermedades.filter((_, j) => j !== i))} className="text-sm font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
+                  <Icon name="close" /> Quitar
+                </button>
+              </div>
               <Campo etiqueta="Enfermedad">
                 <input className="campo" placeholder="Ej. Asma" value={x.nombre} onChange={editarLista(enfermedades, setEnfermedades, i, 'nombre')} />
               </Campo>
@@ -136,13 +165,18 @@ export default function NuevoHijo() {
         >
           {prolongados.map((x, i) => (
             <div key={i} className="bg-surface-low rounded-3xl p-5 space-y-4">
+              <div className="flex justify-end -mb-2">
+                <button type="button" onClick={() => setProlongados(prolongados.filter((_, j) => j !== i))} className="text-sm font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
+                  <Icon name="close" /> Quitar
+                </button>
+              </div>
               <CamposMedicamento x={x} onCambio={(k) => editarLista(prolongados, setProlongados, i, k)} />
             </div>
           ))}
         </BloqueLista>
 
         <Boton type="submit" icono="save" className="w-full uppercase tracking-wide">
-          Guardar perfil
+          {editar ? 'Guardar cambios' : 'Guardar perfil'}
         </Boton>
       </form>
     </Pagina>

@@ -3,9 +3,40 @@ import { Link } from 'react-router-dom'
 import { Avatar, Icon, Pagina, Seccion } from '../components/ui'
 import { useStore } from '../data/store'
 import { edad } from '../data/fechas'
+import { esIOS, estaInstalada, instalar, mostrarNotificacion, notificacionesDisponibles, pedirPermisoNotificaciones, permisoNotificaciones, puedeInstalar } from '../pwa'
+
+function Recordatorios() {
+  const [permiso, setPermiso] = useState(permisoNotificaciones)
+  const [probado, setProbado] = useState(false)
+  const textos = {
+    granted: 'Activados. Te avisamos cada dosis mientras la app esté abierta o en segundo plano.',
+    denied: 'Bloqueados. Para activarlos, entrá a los ajustes del navegador o de la app y permití las notificaciones.',
+    default: 'Todavía no los activaste.',
+    unsupported: 'Este navegador no permite notificaciones. Instalá la app para usarlos.',
+  }
+  return (
+    <div className="bg-surface-lowest rounded-3xl shadow-soft p-5 space-y-3">
+      <p className="text-on-surface-variant">{textos[permiso]}</p>
+      {permiso === 'default' && notificacionesDisponibles() && (
+        <button onClick={async () => setPermiso(await pedirPermisoNotificaciones())} className="min-h-11 px-5 rounded-full bg-primary text-white font-semibold text-sm">
+          Activar recordatorios
+        </button>
+      )}
+      {permiso === 'granted' && (
+        <button
+          onClick={async () => setProbado(await mostrarNotificacion('Aviso de prueba', { body: 'Así te vamos a avisar cada dosis.', tag: 'prueba' }))}
+          className="min-h-11 px-5 rounded-full bg-surface-container text-primary font-semibold text-sm"
+        >
+          {probado ? 'Aviso enviado' : 'Enviar aviso de prueba'}
+        </button>
+      )}
+      <p className="text-xs text-on-surface-variant">Con la app totalmente cerrada el celular no puede avisar: esa parte llega con la versión de Google Play.</p>
+    </div>
+  )
+}
 
 export default function Configuracion() {
-  const { hijos, eliminarHijo, proveedores, agregarProveedor } = useStore()
+  const { hijos, eliminarHijo, proveedores, agregarProveedor, hayEjemplo, eliminarEjemplo } = useStore()
   const [nuevo, setNuevo] = useState('')
   const [confirmar, setConfirmar] = useState(null)
 
@@ -84,7 +115,36 @@ export default function Configuracion() {
         </form>
       </Seccion>
 
-      <p className="text-center text-xs text-on-surface-variant mt-10">Prototipo · los cambios se borran al recargar la página</p>
+      <Seccion titulo="Recordatorios de medicación">
+        <Recordatorios />
+      </Seccion>
+
+      {!estaInstalada() && (puedeInstalar() || esIOS()) && (
+        <Seccion titulo="Instalar en el celular">
+          <div className="bg-surface-lowest rounded-3xl shadow-soft p-5 space-y-3">
+            {puedeInstalar() ? (
+              <button onClick={instalar} className="min-h-11 px-5 rounded-full bg-primary text-white font-semibold text-sm">
+                Instalar la app
+              </button>
+            ) : (
+              <p className="text-on-surface-variant">En Safari tocá Compartir y después “Agregar a inicio”.</p>
+            )}
+          </div>
+        </Seccion>
+      )}
+
+      {hayEjemplo && (
+        <Seccion titulo="Datos de ejemplo">
+          <div className="bg-surface-lowest rounded-3xl shadow-soft p-5 space-y-3">
+            <p className="text-on-surface-variant">Martina y Tomás son de ejemplo. Borralos cuando empieces a cargar tus datos.</p>
+            <button onClick={eliminarEjemplo} className="min-h-11 px-5 rounded-full bg-error-container text-on-error-container font-semibold text-sm">
+              Borrar datos de ejemplo
+            </button>
+          </div>
+        </Seccion>
+      )}
+
+      <p className="text-center text-xs text-on-surface-variant mt-10">Kindred Care · tus datos se guardan solo en este celular</p>
     </Pagina>
   )
 }

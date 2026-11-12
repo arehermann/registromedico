@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Boton, Campo, Card, EtiquetaEstado, Fab, Icon, Interruptor, Pagina, Seccion, useAviso } from '../components/ui'
 import { useStore } from '../data/store'
 import { avanceDosis, estadoTratamiento, fechaCorta, haceCuanto, hora, proximaDosis } from '../data/fechas'
+import { DosisPendientes, useAhora } from '../components/avisos'
 
 function Anillo({ avance }) {
   const r = 20
@@ -15,8 +16,11 @@ function Anillo({ avance }) {
   )
 }
 
-function TarjetaTratamiento({ t, onNotificar }) {
-  const { actualizarTratamiento } = useStore()
+function TarjetaTratamiento({ t }) {
+  const { actualizarTratamiento, eliminarTratamiento, registrarToma, tomas } = useStore()
+  const [confirmar, setConfirmar] = useState(false)
+  useAhora()
+  const ultima = tomas.filter((m) => m.tratamientoId === t.id).sort((a, b) => b.fecha.localeCompare(a.fecha))[0]
   const estado = estadoTratamiento(t)
   const prox = t.notificaciones ? proximaDosis(t) : null
   const borde = { activo: 'border-primary', por_vencer: 'border-tertiary-fixed-dim', vencido: 'border-error', pendiente: 'border-primary-fixed-dim', finalizado: 'border-outline-variant' }[estado.clave]
@@ -54,9 +58,14 @@ function TarjetaTratamiento({ t, onNotificar }) {
         <Boton
           className="w-full mt-4"
           icono="play_arrow"
-          onClick={() => actualizarTratamiento(t.id, { estado: 'en_curso', inicio: new Date().toISOString() })}
+          onClick={() => {
+            // Se inicia al dar la primera dosis, así que queda registrada como tomada
+            const inicio = new Date().toISOString()
+            actualizarTratamiento(t.id, { estado: 'en_curso', inicio })
+            if (t.cadaHoras) registrarToma(t.id, inicio)
+          }}
         >
-          Iniciar tratamiento
+          Iniciar: le di la primera dosis
         </Boton>
       )}
 
@@ -69,6 +78,7 @@ function TarjetaTratamiento({ t, onNotificar }) {
                 <div className="flex-1">
                   <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Próxima dosis</div>
                   <div className="font-display text-2xl font-bold text-primary">{hora(prox.toISOString())}</div>
+                  {ultima && <div className="text-xs text-on-surface-variant">Última toma: {haceCuanto(ultima.fecha).toLowerCase()}</div>}
                 </div>
               </>
             ) : (
@@ -82,48 +92,31 @@ function TarjetaTratamiento({ t, onNotificar }) {
             activo={t.notificaciones}
             onChange={(v) => actualizarTratamiento(t.id, { notificaciones: v })}
           />
-          <div className="flex gap-2">
-            {prox && (
-              <Boton variante="suave" className="flex-1 !px-3 text-sm" icono="notifications" onClick={() => onNotificar(t)}>
-                Ver aviso
-              </Boton>
-            )}
-            <Boton variante="secundario" className="flex-1 !px-3 text-sm" icono="check" onClick={() => actualizarTratamiento(t.id, { estado: 'finalizado' })}>
-              Finalizar
-            </Boton>
-          </div>
+          <Boton variante="secundario" className="w-full text-sm" icono="check" onClick={() => actualizarTratamiento(t.id, { estado: 'finalizado', fin: new Date().toISOString() })}>
+            Finalizar tratamiento
+          </Boton>
         </>
       )}
-    </Card>
-  )
-}
 
-// Vista previa de cómo se verá la notificación de Android (en el paso 3 será una notificación real)
-function NotificacionDemo({ t, hijo, onCerrar, onAccion }) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-md flex items-start justify-center pt-safe" onClick={onCerrar}>
-      <div className="mt-6 mx-4 w-full max-w-md bg-[#f1f3f8] rounded-3xl p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2 text-xs text-on-surface-variant mb-2">
-          <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center">
-            <Icon name="add" className="text-sm" />
-          </span>
-          Kindred Care · ahora
+      {t.estado !== 'en_curso' && (
+        <div className="flex justify-end mt-3">
+          {confirmar ? (
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-surface-container">
+                Cancelar
+              </button>
+              <button onClick={() => eliminarTratamiento(t.id)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-error text-white">
+                Eliminar
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmar(true)} className="text-sm font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
+              <Icon name="delete" /> Eliminar
+            </button>
+          )}
         </div>
-        <div className="font-semibold">Hora de la medicación de {hijo?.nombre}</div>
-        <div className="text-sm text-on-surface-variant">
-          {t.medicamento} · {t.dosis}
-        </div>
-        <div className="flex gap-2 mt-3">
-          <button onClick={() => onAccion('Toma registrada')} className="flex-1 min-h-11 rounded-full bg-primary text-white font-semibold text-sm">
-            Tomada
-          </button>
-          <button onClick={() => onAccion('Te avisamos en 15 minutos')} className="flex-1 min-h-11 rounded-full bg-surface-high text-primary font-semibold text-sm">
-            Posponer 15 min
-          </button>
-        </div>
-        <p className="text-xs text-on-surface-variant text-center mt-3">Vista previa: así se verá el aviso en el celular.</p>
-      </div>
-    </div>
+      )}
+    </Card>
   )
 }
 
@@ -166,9 +159,8 @@ function HojaRescate({ hijo, onCerrar, onGuardar }) {
 }
 
 export default function Tratamientos() {
-  const { hijoActivo: h, hijos, tratamientos, rescates, agregarRescate } = useStore()
+  const { hijoActivo: h, tratamientos, rescates, agregarRescate } = useStore()
   const [params, setParams] = useSearchParams()
-  const [demo, setDemo] = useState(null)
   const [verFinalizados, setVerFinalizados] = useState(false)
   const [aviso, mostrarAviso] = useAviso()
   const rescateAbierto = params.get('rescate') === '1'
@@ -186,6 +178,8 @@ export default function Tratamientos() {
 
   return (
     <Pagina titulo={`Tratamientos de ${h.nombre}`} accion={<Fab to="/tratamientos/nuevo" icono="add_task" etiqueta="Agregar tratamiento" />}>
+      <DosisPendientes hijoId={h.id} />
+
       {condiciones.length > 0 && (
         <Seccion titulo="Condiciones activas">
           <div className="space-y-3">
@@ -209,7 +203,7 @@ export default function Tratamientos() {
         {enCurso.length ? (
           <div className="space-y-4">
             {enCurso.map((t) => (
-              <TarjetaTratamiento key={t.id} t={t} onNotificar={setDemo} />
+              <TarjetaTratamiento key={t.id} t={t} />
             ))}
           </div>
         ) : (
@@ -268,17 +262,6 @@ export default function Tratamientos() {
         </section>
       )}
 
-      {demo && (
-        <NotificacionDemo
-          t={demo}
-          hijo={hijos.find((x) => x.id === demo.hijoId)}
-          onCerrar={() => setDemo(null)}
-          onAccion={(texto) => {
-            setDemo(null)
-            mostrarAviso(texto)
-          }}
-        />
-      )}
       {rescateAbierto && (
         <HojaRescate
           hijo={h}

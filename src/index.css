@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+/* Solo los íconos que usa la app (ver scripts/fuente-iconos.mjs) */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url('./assets/material-symbols-rounded.woff2') format('woff2');
+}
+
 /* Tokens del sistema de diseño "Kindred Care" (bocetos de Stitch) */
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
