@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Avatar, Chip, Fab, Icon, Pagina, Vacio } from '../components/ui'
+import { Miniatura } from './LeerDocumento'
+import { abrirAdjunto } from '../data/archivos'
 import { useStore } from '../data/store'
 import { fechaCorta, mesAnio } from '../data/fechas'
 
@@ -16,7 +19,9 @@ function Detalle({ etiqueta, children }) {
 }
 
 function TarjetaVisita({ v, hijo, mostrarHijo }) {
-  const { eliminarVisita } = useStore()
+  const { eliminarVisita, adjuntos } = useStore()
+  const docs = adjuntos.filter((a) => a.visitaId === v.id)
+  const tratamientos = v.tratamientos ?? (v.tratamiento ? [v.tratamiento] : [])
   const [abierta, setAbierta] = useState(false)
   const [confirmar, setConfirmar] = useState(false)
   const urgente = esUrgencia(v)
@@ -44,6 +49,11 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
             <Icon name="person" className="text-base" /> {v.medico}
           </span>
         )}
+        {docs.length > 0 && (
+          <span className="flex items-center gap-1">
+            <Icon name="attach_file" className="text-base" /> {docs.length}
+          </span>
+        )}
         {mostrarHijo && hijo && (
           <span className="flex items-center gap-1.5">
             <Avatar hijo={hijo} size="w-5 h-5" texto="text-[10px]" /> {hijo.nombre}
@@ -68,12 +78,25 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
               '—'
             )}
           </Detalle>
-          {v.tratamiento && (
+          {tratamientos.length > 0 && (
             <Detalle etiqueta="Tratamiento indicado">
-              {v.tratamiento.medicamento} {v.tratamiento.dosis} {v.tratamiento.frecuencia && `· ${v.tratamiento.frecuencia}`}
+              {tratamientos.map((t, i) => (
+                <div key={i}>
+                  {t.medicamento} {t.dosis} {t.frecuencia && `· ${t.frecuencia}`}
+                </div>
+              ))}
             </Detalle>
           )}
           {v.proximoControl && <Detalle etiqueta="Próximo control">{v.proximoControl}</Detalle>}
+          {docs.length > 0 && (
+            <Detalle etiqueta="Documentos">
+              <div className="space-y-2 mt-1">
+                {docs.map((a) => (
+                  <Miniatura key={a.id} a={a} onAbrir={() => abrirAdjunto(a)} />
+                ))}
+              </div>
+            </Detalle>
+          )}
           <div className="flex justify-end pt-1">
             {confirmar ? (
               <div className="flex gap-2">
@@ -128,6 +151,12 @@ export default function Visitas() {
       subtitulo={todos ? 'Todas las visitas de la familia.' : `Visitas de ${h.nombre}.`}
       accion={<Fab to="/visitas/nueva" etiqueta="Registrar visita" />}
     >
+      <Link to="/documento" className="bg-primary-fixed/60 rounded-2xl p-4 mb-4 flex items-center gap-3 font-semibold">
+        <Icon name="document_scanner" className="text-primary" />
+        <span className="flex-1">Cargar desde una receta o informe</span>
+        <Icon name="chevron_right" className="text-on-surface-variant" />
+      </Link>
+
       <div className="relative mb-3">
         <Icon name="search" className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
         <input

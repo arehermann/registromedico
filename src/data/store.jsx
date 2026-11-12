@@ -13,6 +13,7 @@ export function StoreProvider({ children }) {
   const [datos, setDatos] = useState(vacio)
   const [proveedores, setProveedores] = useState(ejemplo.PROVEEDORES)
   const [hijoActivoId, setHijoActivoIdEstado] = useState(null)
+  const [lecturaIA, setLecturaIAEstado] = useState(null)
   const [cargado, setCargado] = useState(false)
   const [errorCarga, setErrorCarga] = useState(null)
 
@@ -22,6 +23,7 @@ export function StoreProvider({ children }) {
         setDatos(Object.fromEntries(COLECCIONES.map((c) => [c, d[c]])))
         if (d.ajustes.proveedores) setProveedores(d.ajustes.proveedores)
         setHijoActivoIdEstado(d.ajustes.hijoActivoId ?? null)
+        setLecturaIAEstado(d.ajustes.lecturaIA ?? null)
         setCargado(true)
       })
       .catch((e) => setErrorCarga(e?.message ?? String(e)))
@@ -44,6 +46,12 @@ export function StoreProvider({ children }) {
     guardarAjuste('hijoActivoId', id)
   }, [])
 
+  // Dirección y contraseña del servidor de la Raspberry: quedan solo en este celular
+  const setLecturaIA = useCallback((cfg) => {
+    setLecturaIAEstado(cfg)
+    guardarAjuste('lecturaIA', cfg)
+  }, [])
+
   const valor = useMemo(() => {
     const vivos = (c) => datos[c].filter((r) => !r.borrado)
     const hijos = vivos('hijos').sort((a, b) => (a.creado ?? '').localeCompare(b.creado ?? ''))
@@ -64,7 +72,7 @@ export function StoreProvider({ children }) {
 
     const eliminarHijo = (id) => {
       borrar('hijos', id)
-      for (const c of ['tratamientos', 'visitas', 'sintomas', 'rescates']) datos[c].filter((r) => r.hijoId === id && !r.borrado).forEach((r) => borrar(c, r.id))
+      for (const c of ['tratamientos', 'visitas', 'sintomas', 'rescates', 'adjuntos']) datos[c].filter((r) => r.hijoId === id && !r.borrado).forEach((r) => borrar(c, r.id))
     }
 
     return {
@@ -77,6 +85,9 @@ export function StoreProvider({ children }) {
       sintomas: deHijosVivos('sintomas'),
       rescates: deHijosVivos('rescates'),
       tomas: vivos('tomas'),
+      adjuntos: deHijosVivos('adjuntos'),
+      lecturaIA,
+      setLecturaIA,
       proveedores,
       hijoActivo,
       setHijoActivoId,
@@ -89,7 +100,11 @@ export function StoreProvider({ children }) {
       actualizarHijo: (id, cambios) => actualizar('hijos', id, cambios),
       eliminarHijo,
       agregarVisita: (campos) => crear('visitas', 'v', campos),
-      eliminarVisita: (id) => borrar('visitas', id),
+      eliminarVisita(id) {
+        borrar('visitas', id)
+        datos.adjuntos.filter((a) => a.visitaId === id && !a.borrado).forEach((a) => borrar('adjuntos', a.id))
+      },
+      agregarAdjunto: (campos) => crear('adjuntos', 'a', campos),
       agregarTratamiento: (campos) => crear('tratamientos', 't', campos),
       actualizarTratamiento: (id, cambios) => actualizar('tratamientos', id, cambios),
       eliminarTratamiento: (id) => borrar('tratamientos', id),
@@ -147,7 +162,7 @@ export function StoreProvider({ children }) {
         hijos.filter((h) => h.ejemplo).forEach((h) => eliminarHijo(h.id))
       },
     }
-  }, [datos, proveedores, hijoActivoId, cargado, errorCarga, escribir, setHijoActivoId])
+  }, [datos, proveedores, hijoActivoId, lecturaIA, cargado, errorCarga, escribir, setHijoActivoId, setLecturaIA])
 
   return <StoreContext.Provider value={valor}>{children}</StoreContext.Provider>
 }

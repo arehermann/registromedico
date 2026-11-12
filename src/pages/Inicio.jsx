@@ -120,11 +120,12 @@ export default function Inicio() {
       </div>
 
       <h2 className="text-xl font-bold mt-8 mb-3">Registro rápido</h2>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {[
           { to: '/sintomas/nuevo', icono: 'thermostat', texto: 'Síntoma', tono: 'bg-tertiary-fixed text-tertiary' },
           { to: '/visitas/nueva', icono: 'stethoscope', texto: 'Visita', tono: 'bg-primary-fixed text-primary' },
           { to: '/tratamientos?rescate=1', icono: 'medication', texto: 'Rescate', tono: 'bg-secondary-container text-on-secondary-container' },
+          { to: '/documento', icono: 'document_scanner', texto: 'Leer documento', tono: 'bg-primary-container text-white' },
         ].map((a) => (
           <Link key={a.to} to={a.to} className="bg-surface-lowest rounded-3xl shadow-soft p-4 flex flex-col items-center gap-2 font-semibold text-sm">
             <span className={`w-12 h-12 rounded-full flex items-center justify-center ${a.tono}`}>

@@ -165,7 +165,7 @@ export function Boton({ children, variante = 'primario', className = '', icono, 
   }
   return (
     <button
-      className={`min-h-12 rounded-full px-6 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition ${estilos[variante]} ${className}`}
+      className={`min-h-12 rounded-full px-6 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-50 disabled:pointer-events-none ${estilos[variante]} ${className}`}
       {...props}
     >
       {icono && <Icon name={icono} />}

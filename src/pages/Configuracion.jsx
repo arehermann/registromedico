@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Avatar, Icon, Pagina, Seccion } from '../components/ui'
 import { useStore } from '../data/store'
 import { edad } from '../data/fechas'
+import { probarConexion } from '../data/ia'
 import { esIOS, estaInstalada, instalar, mostrarNotificacion, notificacionesDisponibles, pedirPermisoNotificaciones, permisoNotificaciones, puedeInstalar } from '../pwa'
 
 function Recordatorios() {
@@ -32,6 +33,43 @@ function Recordatorios() {
       )}
       <p className="text-xs text-on-surface-variant">Con la app totalmente cerrada el celular no puede avisar: esa parte llega con la versión de Google Play.</p>
     </div>
+  )
+}
+
+function LecturaIA() {
+  const { lecturaIA, setLecturaIA } = useStore()
+  const [url, setUrl] = useState(lecturaIA?.url ?? '')
+  const [clave, setClave] = useState(lecturaIA?.clave ?? '')
+  const [estado, setEstado] = useState(null)
+  const guardarYProbar = async (e) => {
+    e.preventDefault()
+    const cfg = { url: url.trim(), clave: clave.trim() }
+    setLecturaIA(cfg)
+    setEstado({ texto: 'Probando…' })
+    try {
+      const r = await probarConexion(cfg)
+      setEstado({ ok: true, texto: `Conectada. Hoy se leyeron ${r.documentosHoy} de ${r.maximoDiario} documentos posibles.` })
+    } catch (err) {
+      setEstado({ ok: false, texto: err.message })
+    }
+  }
+  return (
+    <form onSubmit={guardarYProbar} className="bg-surface-lowest rounded-3xl shadow-soft p-5 space-y-3">
+      <p className="text-on-surface-variant text-sm">Para sacar los datos de recetas e informes, la app usa el servidor de FamLog en tu Raspberry.</p>
+      <label className="block">
+        <span className="block text-sm font-semibold mb-1.5">Dirección del servidor</span>
+        <input className="campo" type="url" inputMode="url" placeholder="https://famlog.tu-dominio.com" value={url} onChange={(e) => setUrl(e.target.value)} />
+      </label>
+      <label className="block">
+        <span className="block text-sm font-semibold mb-1.5">Contraseña</span>
+        <input className="campo" type="password" autoComplete="off" value={clave} onChange={(e) => setClave(e.target.value)} />
+      </label>
+      <button disabled={!url.trim() || !clave.trim()} className="min-h-11 px-5 rounded-full bg-primary text-white font-semibold text-sm disabled:opacity-50">
+        Guardar y probar
+      </button>
+      {estado && <p className={`text-sm ${estado.ok === false ? 'text-error' : estado.ok ? 'text-secondary' : 'text-on-surface-variant'}`}>{estado.texto}</p>}
+      <p className="text-xs text-on-surface-variant">Esto queda solo en este celular y no viaja en los respaldos.</p>
+    </form>
   )
 }
 
@@ -113,6 +151,10 @@ export default function Configuracion() {
             <Icon name="add" />
           </button>
         </form>
+      </Seccion>
+
+      <Seccion titulo="Lectura de documentos con IA">
+        <LecturaIA />
       </Seccion>
 
       <Seccion titulo="Recordatorios de medicación">

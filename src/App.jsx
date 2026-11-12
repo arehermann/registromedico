@@ -8,6 +8,7 @@ import Tratamientos from './pages/Tratamientos'
 import NuevoTratamiento from './pages/NuevoTratamiento'
 import Visitas from './pages/Visitas'
 import NuevaVisita from './pages/NuevaVisita'
+import LeerDocumento from './pages/LeerDocumento'
 import Sintomas from './pages/Sintomas'
 import NuevoSintoma from './pages/NuevoSintoma'
 import Respaldo from './pages/Respaldo'
@@ -107,6 +108,14 @@ export default function App() {
                 element={
                   <ConHijo>
                     <Visitas />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/documento"
+                element={
+                  <ConHijo>
+                    <LeerDocumento />
                   </ConHijo>
                 }
               />

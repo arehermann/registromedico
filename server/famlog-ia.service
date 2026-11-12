@@ -1,0 +1,12 @@
+[Unit]
+Description=FamLog - lectura de documentos con IA
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/pi/famlog-ia
+ExecStart=/usr/bin/node --env-file=.env servidor.js
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target
