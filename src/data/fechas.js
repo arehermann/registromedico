@@ -1,5 +1,11 @@
 const HORA = 3600_000
 
+// Fecha de hoy en la hora del celular (toISOString da la de Greenwich: de noche en Uruguay ya sería mañana)
+export function hoy() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function edad(nacimiento) {
   const n = new Date(nacimiento)
   const hoy = new Date()

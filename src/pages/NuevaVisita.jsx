@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Boton, Campo, Chip, Icon, Interruptor, Pagina } from '../components/ui'
 import { useStore } from '../data/store'
 import { ESPECIALIDADES } from '../data/ejemplo'
 import { abrirAdjunto, prepararArchivo } from '../data/archivos'
 import { Miniatura } from './LeerDocumento'
+import { hoy } from '../data/fechas'
 
 const PROCEDIMIENTOS = ['Placa de tórax', 'Nebulizaciones', 'Hisopado', 'Análisis de sangre', 'Vacuna', 'Curación', 'Otoscopía']
 
@@ -25,13 +26,16 @@ function Bloque({ icono, titulo, accion, children }) {
 const TRAT_VACIO = { medicamento: '', dosis: '', cadaHoras: '', duracionDias: '', indicaciones: '' }
 const texto = (v) => (v == null ? '' : String(v))
 
-// Datos leídos por la IA (si vienen de "Leer un documento") pasados a los campos del formulario
-function inicial(prefill, proveedores) {
-  const v = prefill?.visita ?? {}
+const tratDeVisita = (v) => v.tratamientos ?? (v.tratamiento ? [v.tratamiento] : [])
+const nombreMed = (t) => t.medicamento.trim().toLowerCase()
+
+// Campos del formulario: los de la visita que se edita, o los leídos por la IA (si vienen de "Leer un documento")
+function inicial(prefill, proveedores, existente) {
+  const v = existente ?? prefill?.visita ?? {}
   const lugarConocido = v.lugar && proveedores.find((p) => p.toLowerCase() === v.lugar.toLowerCase())
   return {
     f: {
-      fecha: /^\d{4}-\d{2}-\d{2}$/.test(v.fecha ?? '') ? v.fecha : new Date().toISOString().slice(0, 10),
+      fecha: /^\d{4}-\d{2}-\d{2}$/.test(v.fecha ?? '') ? v.fecha : hoy(),
       motivo: v.motivo === 'Control' ? 'Control' : 'Consulta',
       lugar: lugarConocido || (v.lugar ? 'Otro' : ''),
       lugarOtro: lugarConocido ? '' : texto(v.lugar),
@@ -39,9 +43,10 @@ function inicial(prefill, proveedores) {
       especialidad: texto(v.especialidad),
       diagnostico: texto(v.diagnostico),
       proximoControl: texto(v.proximoControl),
+      notas: texto(v.notas),
     },
     procedimientos: v.procedimientos ?? [],
-    trats: (prefill?.tratamientos ?? []).map((t) => ({
+    trats: (existente ? tratDeVisita(existente) : (prefill?.tratamientos ?? [])).map((t) => ({
       medicamento: texto(t.medicamento),
       dosis: texto(t.dosis),
       cadaHoras: texto(t.cadaHoras),
@@ -51,18 +56,29 @@ function inicial(prefill, proveedores) {
   }
 }
 
-export default function NuevaVisita() {
-  const { hijoActivo: h, proveedores, agregarVisita, agregarTratamiento, agregarAdjunto, actualizarHijo } = useStore()
+export default function NuevaVisita({ editar = false }) {
+  const { hijoActivo: h, hijos, proveedores, visitas, adjuntos: guardados, agregarVisita, actualizarVisita, agregarTratamiento, agregarAdjunto, eliminarAdjunto, actualizarHijo } = useStore()
   const navigate = useNavigate()
   const { state } = useLocation()
-  const [ini] = useState(() => inicial(state?.prefill, proveedores))
-  const leido = Boolean(state?.prefill)
+  const { id } = useParams()
+  const existente = editar ? visitas.find((v) => v.id === id) : null
+  if (editar && !existente) return <Pagina titulo="Visita no encontrada" volver />
+  return <Formulario key={id ?? 'nueva'} {...{ h: existente ? (hijos.find((x) => x.id === existente.hijoId) ?? h) : h, proveedores, existente, guardados, state, navigate, agregarVisita, actualizarVisita, agregarTratamiento, agregarAdjunto, eliminarAdjunto, actualizarHijo }} />
+}
+
+function Formulario({ h, proveedores, existente, guardados, state, navigate, agregarVisita, actualizarVisita, agregarTratamiento, agregarAdjunto, eliminarAdjunto, actualizarHijo }) {
+  const [ini] = useState(() => inicial(existente ? null : state?.prefill, proveedores, existente))
+  const leido = !existente && Boolean(state?.prefill)
+  // Al editar, solo los medicamentos que se agregan ahora pueden ir a Tratamientos (los demás ya fueron)
+  const [yaEstaban] = useState(() => new Set(ini.trats.filter(() => existente).map(nombreMed)))
+  const [previos, setPrevios] = useState(() => (existente ? guardados.filter((a) => a.visitaId === existente.id) : []))
+  const [agregarATratamientos, setAgregarATratamientos] = useState(null)
   const [f, setF] = useState(ini.f)
   const [procedimientos, setProcedimientos] = useState(ini.procedimientos)
   const [nuevoProc, setNuevoProc] = useState('')
   const [trats, setTrats] = useState(ini.trats)
   const [iniciar, setIniciar] = useState(false)
-  const [adjuntos, setAdjuntos] = useState(state?.adjuntos ?? [])
+  const [adjuntos, setAdjuntos] = useState(existente ? [] : (state?.adjuntos ?? []))
   const [errorAdjunto, setErrorAdjunto] = useState(null)
   const entradaArchivo = useRef(null)
   const cambiar = (k) => (e) => setF({ ...f, [k]: e.target.value })
@@ -82,11 +98,15 @@ export default function NuevaVisita() {
 
   const alternarProc = (p) => setProcedimientos((l) => (l.includes(p) ? l.filter((x) => x !== p) : [...l, p]))
 
+  // Una visita de otra fecha (por ejemplo una receta vieja) no carga sus medicamentos en Tratamientos, salvo que se pida
+  const esDeHoy = f.fecha === hoy()
+  const medsNuevos = trats.filter((t) => t.medicamento.trim() && !yaEstaban.has(nombreMed(t)))
+  const aTratamientos = agregarATratamientos ?? esDeHoy
+
   const guardar = (e) => {
     e.preventDefault()
     const tratamientos = trats.filter((t) => t.medicamento.trim()).map((t) => ({ ...t, frecuencia: t.cadaHoras ? `cada ${t.cadaHoras} h` : '' }))
-    const visita = agregarVisita({
-      hijoId: h.id,
+    const campos = {
       fecha: f.fecha,
       motivo: f.motivo,
       lugar: f.lugar === 'Otro' ? f.lugarOtro || 'Otro' : f.lugar,
@@ -95,15 +115,21 @@ export default function NuevaVisita() {
       diagnostico: f.diagnostico,
       procedimientos,
       proximoControl: f.proximoControl,
+      notas: f.notas.trim() || undefined,
       // `tratamiento` queda por compatibilidad con visitas y respaldos anteriores
       tratamiento: tratamientos[0] ?? null,
       tratamientos,
-      leidoConIA: leido || undefined,
-    })
-    for (const t of tratamientos)
-      agregarTratamiento({
+    }
+    let visita = existente
+    if (existente) actualizarVisita(existente.id, campos)
+    else visita = agregarVisita({ hijoId: h.id, ...campos, leidoConIA: leido || undefined })
+    const originales = existente ? guardados.filter((a) => a.visitaId === existente.id) : []
+    for (const a of originales) if (!previos.some((p) => p.id === a.id)) eliminarAdjunto(a.id)
+    if (aTratamientos)
+      for (const t of medsNuevos)
+        agregarTratamiento({
         hijoId: h.id,
-        medicamento: t.medicamento,
+        medicamento: t.medicamento.trim(),
         dosis: t.dosis,
         cadaHoras: Number(t.cadaHoras) || null,
         duracionDias: Number(t.duracionDias) || null,
@@ -122,13 +148,14 @@ export default function NuevaVisita() {
       if (p.alergias?.length) cambios.alergias = [...(h.alergias ?? []), ...p.alergias]
       actualizarHijo(h.id, cambios)
     }
-    navigate('/visitas')
+    if (existente) navigate(-1)
+    else navigate('/visitas')
   }
 
   return (
-    <Pagina titulo="Registrar visita" subtitulo={`Consulta de ${h.nombre}, para tenerla siempre a mano.`} volver>
+    <Pagina titulo={existente ? 'Editar visita' : 'Registrar visita'} subtitulo={existente ? `Consulta de ${h.nombre}` : `Consulta de ${h.nombre}, para tenerla siempre a mano.`} volver>
       <form onSubmit={guardar} className="space-y-5">
-        {leido ? (
+        {existente ? null : leido ? (
           <div className="bg-primary-fixed/60 rounded-3xl p-4 flex gap-3">
             <Icon name="auto_awesome" className="text-primary" />
             <p className="text-sm">Completé los campos con lo que leí del documento. Revisalos y corregí lo que haga falta antes de guardar.</p>
@@ -219,6 +246,9 @@ export default function NuevaVisita() {
           <Campo etiqueta="Próximo control (nota)">
             <input className="campo" placeholder="Ej. En 10 días con pediatra" value={f.proximoControl} onChange={cambiar('proximoControl')} />
           </Campo>
+          <Campo etiqueta="Notas">
+            <textarea className="campo min-h-24" placeholder="Lo que quieras recordar. No aparece en la lista de visitas, solo al abrirla." value={f.notas} onChange={cambiar('notas')} />
+          </Campo>
         </Bloque>
 
         <Bloque
@@ -265,7 +295,15 @@ export default function NuevaVisita() {
                   )}
                 </div>
               ))}
-              <Interruptor etiqueta={trats.length > 1 ? '¿Iniciar los tratamientos ahora?' : '¿Iniciar tratamiento ahora?'} activo={iniciar} onChange={setIniciar} />
+              {medsNuevos.length > 0 && !esDeHoy && (
+                <div className="space-y-1">
+                  <Interruptor etiqueta="Agregar también a Tratamientos" activo={aTratamientos} onChange={setAgregarATratamientos} />
+                  {!aTratamientos && <p className="text-sm text-on-surface-variant">La visita no es de hoy, así que la medicación queda anotada solo en la visita.</p>}
+                </div>
+              )}
+              {medsNuevos.length > 0 && aTratamientos && (
+                <Interruptor etiqueta={medsNuevos.length > 1 ? '¿Iniciar los tratamientos ahora?' : '¿Iniciar tratamiento ahora?'} activo={iniciar} onChange={setIniciar} />
+              )}
             </>
           ) : (
             <p className="text-sm text-on-surface-variant">Si le recetaron algo, agregalo y queda en Tratamientos.</p>
@@ -282,8 +320,11 @@ export default function NuevaVisita() {
           }
         >
           <input ref={entradaArchivo} type="file" accept="application/pdf,image/*" multiple className="hidden" onChange={adjuntar} />
-          {adjuntos.length ? (
+          {previos.length || adjuntos.length ? (
             <div className="space-y-2">
+              {previos.map((a) => (
+                <Miniatura key={a.id} a={a} onAbrir={() => abrirAdjunto(a)} onQuitar={() => setPrevios((l) => l.filter((x) => x.id !== a.id))} />
+              ))}
               {adjuntos.map((a, i) => (
                 <Miniatura key={i} a={a} onAbrir={() => abrirAdjunto(a)} onQuitar={() => setAdjuntos((l) => l.filter((_, j) => j !== i))} />
               ))}
@@ -295,7 +336,7 @@ export default function NuevaVisita() {
         </Bloque>
 
         <Boton type="submit" icono="save" className="w-full uppercase tracking-wide">
-          Guardar visita
+          {existente ? 'Guardar cambios' : 'Guardar visita'}
         </Boton>
       </form>
     </Pagina>
