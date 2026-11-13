@@ -1,122 +1,88 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Boton, Campo, Card, EtiquetaEstado, Fab, Icon, Interruptor, Pagina, Seccion, useAviso } from '../components/ui'
+import { Boton, Campo, EtiquetaEstado, Fab, Fila, Icon, Interruptor, Lista, Pagina, Seccion, useAviso } from '../components/ui'
 import { useStore } from '../data/store'
-import { avanceDosis, estadoTratamiento, fechaCorta, haceCuanto, hora, proximaDosis } from '../data/fechas'
+import { estadoTratamiento, fechaCorta, haceCuanto, hora, proximaDosis } from '../data/fechas'
 import { DosisPendientes, useAhora } from '../components/avisos'
 
-function Anillo({ avance }) {
-  const r = 20
-  const c = 2 * Math.PI * r
-  return (
-    <svg viewBox="0 0 48 48" className="w-12 h-12 -rotate-90 shrink-0">
-      <circle cx="24" cy="24" r={r} fill="none" stroke="var(--color-primary-fixed)" strokeWidth="5" />
-      <circle cx="24" cy="24" r={r} fill="none" stroke="var(--color-primary)" strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - avance)} />
-    </svg>
-  )
-}
-
-function TarjetaTratamiento({ t }) {
+function FilaTratamiento({ t }) {
   const { actualizarTratamiento, eliminarTratamiento, registrarToma, tomas } = useStore()
+  const [abierta, setAbierta] = useState(false)
   const [confirmar, setConfirmar] = useState(false)
   useAhora()
   const ultima = tomas.filter((m) => m.tratamientoId === t.id).sort((a, b) => b.fecha.localeCompare(a.fecha))[0]
   const estado = estadoTratamiento(t)
-  const prox = t.notificaciones ? proximaDosis(t) : null
-  const borde = { activo: 'border-primary', por_vencer: 'border-tertiary-fixed-dim', vencido: 'border-error', pendiente: 'border-primary-fixed-dim', finalizado: 'border-outline-variant' }[estado.clave]
+  const prox = t.estado === 'en_curso' && t.notificaciones ? proximaDosis(t) : null
+  const detalle = [t.dosis, t.cadaHoras && `cada ${t.cadaHoras} h`].filter(Boolean).join(' · ')
 
   return (
-    <Card className={`border-l-[6px] ${borde}`}>
-      <div className="flex items-start gap-4">
-        <span className="w-14 h-14 rounded-2xl bg-primary-fixed text-primary flex items-center justify-center shrink-0">
-          <Icon name={t.tipo === 'cronico' ? 'autorenew' : 'medication_liquid'} className="text-3xl" />
-        </span>
+    <div>
+      <button type="button" onClick={() => setAbierta((a) => !a)} className="w-full flex items-center gap-3 px-4 py-3 text-left min-h-14">
         <div className="flex-1 min-w-0">
-          <div className="font-display text-xl font-semibold leading-tight">{t.medicamento}</div>
-          <div className="text-sm text-on-surface-variant italic mb-2">{t.tipo === 'cronico' ? 'Tratamiento prolongado' : `Temporal · ${t.duracionDias} días`}</div>
-          <EtiquetaEstado estado={estado} />
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2 mt-4">
-        <span className="bg-surface-container rounded-xl px-3 py-1.5 text-sm font-semibold flex items-center gap-1">
-          <Icon name="vaccines" className="text-base text-primary" /> {t.dosis}
-        </span>
-        {t.cadaHoras && (
-          <span className="bg-surface-container rounded-xl px-3 py-1.5 text-sm font-semibold flex items-center gap-1">
-            <Icon name="schedule" className="text-base text-primary" /> Cada {t.cadaHoras} h
-          </span>
-        )}
-        {t.inicio && t.estado !== 'pendiente' && (
-          <span className="bg-surface-container rounded-xl px-3 py-1.5 text-sm font-semibold flex items-center gap-1">
-            <Icon name="event" className="text-base text-primary" /> Desde {fechaCorta(t.inicio)}
-          </span>
-        )}
-      </div>
-
-      {t.estado === 'pendiente' && (
-        <Boton
-          className="w-full mt-4"
-          icono="play_arrow"
-          onClick={() => {
-            // Se inicia al dar la primera dosis, así que queda registrada como tomada
-            const inicio = new Date().toISOString()
-            actualizarTratamiento(t.id, { estado: 'en_curso', inicio })
-            if (t.cadaHoras) registrarToma(t.id, inicio)
-          }}
-        >
-          Iniciar: le di la primera dosis
-        </Boton>
-      )}
-
-      {t.estado === 'en_curso' && (
-        <>
-          <div className="bg-surface-low rounded-2xl p-3 mt-4 flex items-center gap-3">
-            {prox ? (
-              <>
-                <Anillo avance={avanceDosis(t)} />
-                <div className="flex-1">
-                  <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Próxima dosis</div>
-                  <div className="font-display text-2xl font-bold text-primary">{hora(prox.toISOString())}</div>
-                  {ultima && <div className="text-xs text-on-surface-variant">Última toma: {haceCuanto(ultima.fecha).toLowerCase()}</div>}
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 text-sm text-on-surface-variant flex items-center gap-2 min-h-12">
-                <Icon name="notifications_off" /> Sin recordatorios: queda visible en la ficha
-              </div>
-            )}
+          <div className="font-medium leading-snug">{t.medicamento}</div>
+          <div className="text-sm text-on-surface-variant flex flex-wrap items-center gap-x-2">
+            {detalle && <span>{detalle}</span>}
+            <EtiquetaEstado estado={estado} />
           </div>
-          <Interruptor
-            etiqueta="Recordatorios"
-            activo={t.notificaciones}
-            onChange={(v) => actualizarTratamiento(t.id, { notificaciones: v })}
-          />
-          <Boton variante="secundario" className="w-full text-sm" icono="check" onClick={() => actualizarTratamiento(t.id, { estado: 'finalizado', fin: new Date().toISOString() })}>
-            Finalizar tratamiento
-          </Boton>
-        </>
-      )}
+        </div>
+        {prox && (
+          <div className="text-right shrink-0">
+            <div className="font-semibold text-primary">{hora(prox.toISOString())}</div>
+            <div className="text-[11px] text-on-surface-variant">próxima</div>
+          </div>
+        )}
+        <Icon name={abierta ? 'expand_less' : 'expand_more'} className="text-on-surface-variant shrink-0" />
+      </button>
 
-      {t.estado !== 'en_curso' && (
-        <div className="flex justify-end mt-3">
-          {confirmar ? (
-            <div className="flex gap-2">
-              <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-surface-container">
-                Cancelar
-              </button>
-              <button onClick={() => eliminarTratamiento(t.id)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-error text-white">
-                Eliminar
-              </button>
-            </div>
-          ) : (
-            <button onClick={() => setConfirmar(true)} className="text-sm font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
-              <Icon name="delete" /> Eliminar
-            </button>
+      {abierta && (
+        <div className="px-4 pb-3 space-y-1 text-sm">
+          {t.inicio && t.estado !== 'pendiente' && <p className="text-on-surface-variant">Desde el {fechaCorta(t.inicio)}{ultima ? ` · última toma ${haceCuanto(ultima.fecha).toLowerCase()}` : ''}</p>}
+
+          {t.estado === 'pendiente' && (
+            <Boton
+              className="w-full mt-1 min-h-11 text-sm"
+              icono="play_arrow"
+              onClick={() => {
+                // Se inicia al dar la primera dosis, así que queda registrada como tomada
+                const inicio = new Date().toISOString()
+                actualizarTratamiento(t.id, { estado: 'en_curso', inicio })
+                if (t.cadaHoras) registrarToma(t.id, inicio)
+              }}
+            >
+              Iniciar: le di la primera dosis
+            </Boton>
           )}
+
+          {t.estado === 'en_curso' && (
+            <>
+              <Interruptor etiqueta="Recordatorios" activo={t.notificaciones} onChange={(v) => actualizarTratamiento(t.id, { notificaciones: v })} />
+              <button
+                onClick={() => actualizarTratamiento(t.id, { estado: 'finalizado', fin: new Date().toISOString() })}
+                className="min-h-10 font-semibold text-primary flex items-center gap-1"
+              >
+                <Icon name="check" className="text-lg" /> Finalizar tratamiento
+              </button>
+            </>
+          )}
+
+          {t.estado !== 'en_curso' &&
+            (confirmar ? (
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full font-semibold bg-surface-container">
+                  Cancelar
+                </button>
+                <button onClick={() => eliminarTratamiento(t.id)} className="px-4 min-h-10 rounded-full font-semibold bg-error text-white">
+                  Eliminar
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmar(true)} className="font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
+                <Icon name="delete" className="text-lg" /> Eliminar
+              </button>
+            ))}
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 
@@ -171,93 +137,62 @@ export default function Tratamientos() {
   const finalizados = propios.filter((t) => t.estado === 'finalizado')
   const rescatesHijo = rescates.filter((r) => r.hijoId === h.id).slice(0, 3)
 
-  const condiciones = [
-    ...(h.condiciones ?? []).map((c) => ({ ...c, icono: 'pulmonology', tono: 'bg-secondary-container text-on-secondary-container', color: 'text-primary' })),
-    ...h.alergias.map((a) => ({ nombre: a, tipo: 'Alergia', estado: 'Evitar', icono: 'do_not_disturb_on', tono: 'bg-tertiary-fixed text-tertiary', color: 'text-tertiary' })),
-  ]
-
   return (
-    <Pagina titulo={`Tratamientos de ${h.nombre}`} accion={<Fab to="/tratamientos/nuevo" icono="add_task" etiqueta="Agregar tratamiento" />}>
+    <Pagina titulo="Tratamientos" accion={<Fab to="/tratamientos/nuevo" icono="add" etiqueta="Agregar tratamiento" />}>
       <DosisPendientes hijoId={h.id} />
-
-      {condiciones.length > 0 && (
-        <Seccion titulo="Condiciones activas">
-          <div className="space-y-3">
-            {condiciones.map((c) => (
-              <div key={c.tipo + c.nombre} className="bg-surface-low rounded-3xl p-4 flex items-center gap-4">
-                <span className={`w-12 h-12 rounded-full flex items-center justify-center ${c.tono}`}>
-                  <Icon name={c.icono} />
-                </span>
-                <div className="flex-1">
-                  <div className={`text-xs font-bold uppercase tracking-wider ${c.color}`}>{c.tipo}</div>
-                  <div className="font-display text-lg font-semibold">{c.nombre}</div>
-                </div>
-                <span className="text-xs font-semibold bg-surface-highest rounded-full px-3 py-1">{c.estado}</span>
-              </div>
-            ))}
-          </div>
-        </Seccion>
-      )}
 
       <Seccion titulo="En curso">
         {enCurso.length ? (
-          <div className="space-y-4">
+          <Lista>
             {enCurso.map((t) => (
-              <TarjetaTratamiento key={t.id} t={t} />
+              <FilaTratamiento key={t.id} t={t} />
             ))}
-          </div>
+          </Lista>
         ) : (
-          <p className="text-on-surface-variant">No hay tratamientos en curso.</p>
+          <p className="text-on-surface-variant px-1">No hay tratamientos en curso.</p>
         )}
       </Seccion>
 
       {pendientes.length > 0 && (
-        <Seccion titulo="Precargados, sin iniciar">
-          <div className="space-y-4">
+        <Seccion titulo="Sin iniciar">
+          <Lista>
             {pendientes.map((t) => (
-              <TarjetaTratamiento key={t.id} t={t} />
+              <FilaTratamiento key={t.id} t={t} />
             ))}
-          </div>
+          </Lista>
         </Seccion>
       )}
 
       <Seccion
-        titulo="Medicación de rescate"
+        titulo="Rescate"
         accion={
-          <button onClick={() => setParams({ rescate: '1' })} className="w-11 h-11 rounded-full bg-primary-fixed text-primary flex items-center justify-center" aria-label="Registrar rescate">
-            <Icon name="add" />
+          <button onClick={() => setParams({ rescate: '1' })} className="text-primary font-semibold text-sm flex items-center gap-0.5 min-h-8">
+            <Icon name="add" className="text-lg" /> Anotar
           </button>
         }
       >
         {rescatesHijo.length ? (
-          <div className="bg-surface-lowest rounded-3xl shadow-soft divide-y divide-surface-high">
+          <Lista>
             {rescatesHijo.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 p-4">
-                <Icon name="medication" className="text-secondary" />
-                <div className="flex-1">
-                  <div className="font-semibold">{r.medicamento}</div>
-                  <div className="text-sm text-on-surface-variant">{r.dosis}</div>
-                </div>
-                <div className="text-sm text-on-surface-variant">{haceCuanto(r.fecha)}</div>
-              </div>
+              <Fila key={r.id} titulo={r.medicamento} detalle={r.dosis} derecha={<span className="text-sm text-on-surface-variant shrink-0">{haceCuanto(r.fecha)}</span>} />
             ))}
-          </div>
+          </Lista>
         ) : (
-          <p className="text-on-surface-variant">Tocá + para anotar una toma puntual.</p>
+          <p className="text-on-surface-variant px-1">Sin tomas puntuales anotadas.</p>
         )}
       </Seccion>
 
       {finalizados.length > 0 && (
         <section>
-          <button onClick={() => setVerFinalizados((v) => !v)} className="flex items-center gap-2 font-semibold text-on-surface-variant min-h-12">
-            <Icon name={verFinalizados ? 'expand_less' : 'expand_more'} /> Finalizados ({finalizados.length})
+          <button onClick={() => setVerFinalizados((v) => !v)} className="flex items-center gap-1 px-1 text-sm font-semibold text-on-surface-variant min-h-11">
+            Finalizados ({finalizados.length}) <Icon name={verFinalizados ? 'expand_less' : 'expand_more'} className="text-lg" />
           </button>
           {verFinalizados && (
-            <div className="space-y-4 mt-2 opacity-80">
+            <Lista className="opacity-80">
               {finalizados.map((t) => (
-                <TarjetaTratamiento key={t.id} t={t} />
+                <FilaTratamiento key={t.id} t={t} />
               ))}
-            </div>
+            </Lista>
           )}
         </section>
       )}
