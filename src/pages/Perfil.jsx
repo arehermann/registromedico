@@ -54,13 +54,7 @@ export default function Perfil() {
           <div className="flex-1 bg-white/15 rounded-xl px-3 py-2">
             <div className="text-xs opacity-90 mb-1">Alergias</div>
             {h.alergias.length ? (
-              <div className="flex flex-wrap gap-1.5">
-                {h.alergias.map((a) => (
-                  <span key={a} className="bg-white text-on-error-container font-semibold text-sm rounded-full px-2.5 py-0.5">
-                    {a}
-                  </span>
-                ))}
-              </div>
+              <div className="font-display text-lg font-bold leading-snug">{h.alergias.join(', ')}</div>
             ) : (
               <div className="font-semibold">Sin alergias conocidas</div>
             )}
