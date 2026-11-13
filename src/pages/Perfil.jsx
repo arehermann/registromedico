@@ -27,36 +27,36 @@ export default function Perfil() {
 
   return (
     <Pagina>
-      <div className="flex items-center gap-4 mb-6">
-        <Avatar hijo={h} size="w-20 h-20" texto="text-3xl" />
+      <div className="flex items-center gap-3 mb-4">
+        <Avatar hijo={h} size="w-12 h-12" texto="text-xl" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-[28px] leading-9 font-bold">{h.nombre}</h1>
-          <p className="text-on-surface-variant font-semibold">
+          <h1 className="text-2xl leading-8 font-bold">{h.nombre}</h1>
+          <p className="text-on-surface-variant text-sm font-semibold">
             {edad(h.nacimiento)} · nació el {fechaCorta(h.nacimiento)}
           </p>
-          {h.cedula && <p className="text-on-surface-variant text-sm">C.I. {h.cedula}</p>}
+          {h.cedula && <p className="text-on-surface-variant text-xs">C.I. {h.cedula}</p>}
         </div>
-        <Link to="/hijo/editar" className="w-12 h-12 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0" aria-label="Editar ficha">
+        <Link to="/hijo/editar" className="w-10 h-10 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0" aria-label="Editar ficha">
           <Icon name="edit" />
         </Link>
       </div>
 
       {/* Bloque de emergencia */}
-      <div className="rounded-3xl bg-primary-container text-white p-5 mb-4 shadow-float">
-        <div className="flex items-center gap-2 text-sm font-semibold opacity-90 mb-3">
+      <div className="rounded-2xl bg-primary-container text-white p-4 mb-4 shadow-float">
+        <div className="flex items-center gap-2 text-sm font-semibold opacity-90 mb-2">
           <Icon name="emergency" /> Datos para emergencia
         </div>
         <div className="flex items-stretch gap-3">
-          <div className="bg-white/15 rounded-2xl px-4 py-3 text-center">
+          <div className="bg-white/15 rounded-xl px-3 py-2 text-center">
             <div className="text-xs opacity-90">Sangre</div>
-            <div className="font-display text-3xl font-bold">{h.grupoSanguineo || '—'}</div>
+            <div className="font-display text-2xl font-bold">{h.grupoSanguineo || '—'}</div>
           </div>
-          <div className="flex-1 bg-white/15 rounded-2xl px-4 py-3">
+          <div className="flex-1 bg-white/15 rounded-xl px-3 py-2">
             <div className="text-xs opacity-90 mb-1">Alergias</div>
             {h.alergias.length ? (
               <div className="flex flex-wrap gap-1.5">
                 {h.alergias.map((a) => (
-                  <span key={a} className="bg-white text-on-error-container font-semibold text-sm rounded-full px-3 py-1">
+                  <span key={a} className="bg-white text-on-error-container font-semibold text-sm rounded-full px-2.5 py-0.5">
                     {a}
                   </span>
                 ))}
@@ -74,9 +74,9 @@ export default function Perfil() {
         )}
       </div>
 
-      <Card className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-lg">Medidas</h2>
+      <Card className="mb-4 !py-3">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-bold">Medidas</h2>
           <button onClick={() => setEditando((e) => !e)} className="text-primary font-semibold text-sm flex items-center gap-1 min-h-10">
             <Icon name={editando ? 'close' : 'edit'} className="text-lg" /> {editando ? 'Cerrar' : 'Actualizar'}
           </button>
@@ -84,28 +84,28 @@ export default function Perfil() {
         {editando ? (
           <EditarMedidas hijo={h} onListo={() => setEditando(false)} />
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-surface-low rounded-2xl p-3 flex items-center gap-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-surface-low rounded-xl px-3 py-2 flex items-center gap-2">
               <Icon name="scale" className="text-secondary" />
               <div>
                 <div className="text-xs text-on-surface-variant">Peso</div>
-                <div className="font-bold text-lg">{h.peso} kg</div>
+                <div className="font-bold">{h.peso} kg</div>
               </div>
             </div>
-            <div className="bg-surface-low rounded-2xl p-3 flex items-center gap-3">
+            <div className="bg-surface-low rounded-xl px-3 py-2 flex items-center gap-2">
               <Icon name="height" className="text-tertiary" />
               <div>
                 <div className="text-xs text-on-surface-variant">Altura</div>
-                <div className="font-bold text-lg">{h.altura} cm</div>
+                <div className="font-bold">{h.altura} cm</div>
               </div>
             </div>
           </div>
         )}
-        <div className="flex gap-2 mt-3 text-sm">
-          <span className={`rounded-full px-3 py-1 font-semibold ${h.vacunasAlDia ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-fixed text-tertiary'}`}>
+        <div className="flex gap-2 mt-2 text-xs">
+          <span className={`rounded-full px-2.5 py-0.5 font-semibold ${h.vacunasAlDia ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-fixed text-tertiary'}`}>
             {h.vacunasAlDia ? 'Vacunas al día' : 'Vacunas pendientes'}
           </span>
-          {h.prematuro && <span className="rounded-full px-3 py-1 font-semibold bg-primary-fixed text-primary">Prematuro</span>}
+          {h.prematuro && <span className="rounded-full px-2.5 py-0.5 font-semibold bg-primary-fixed text-primary">Prematuro</span>}
         </div>
       </Card>
 
@@ -121,13 +121,13 @@ export default function Perfil() {
         {activos.length ? (
           <div className="space-y-2">
             {activos.map((t) => (
-              <Card key={t.id} className="!p-4 flex items-center gap-3">
-                <span className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${t.tipo === 'cronico' ? 'bg-primary-fixed text-primary' : 'bg-tertiary-fixed text-tertiary'}`}>
+              <Card key={t.id} className="!px-3 !py-2.5 flex items-center gap-3">
+                <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${t.tipo === 'cronico' ? 'bg-primary-fixed text-primary' : 'bg-tertiary-fixed text-tertiary'}`}>
                   <Icon name={t.tipo === 'cronico' ? 'autorenew' : 'medication'} />
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold truncate">{t.medicamento}</div>
-                  <div className="text-sm text-on-surface-variant">
+                  <div className="text-xs text-on-surface-variant">
                     {t.dosis}
                     {t.cadaHoras ? ` · cada ${t.cadaHoras} h` : ''}
                   </div>
@@ -142,7 +142,7 @@ export default function Perfil() {
       </Seccion>
 
       {ultimaConControl && (
-        <Card className="mb-6 !bg-tertiary-fixed/60 flex items-start gap-3">
+        <Card className="mb-4 !bg-tertiary-fixed/60 flex items-start gap-3">
           <Icon name="event_upcoming" className="text-tertiary" />
           <div>
             <div className="text-xs font-semibold text-tertiary uppercase tracking-wide">Próximo control</div>
@@ -155,12 +155,12 @@ export default function Perfil() {
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Link to="/visitas" className="bg-surface-lowest shadow-soft rounded-3xl p-5 flex flex-col gap-2 font-semibold">
-          <Icon name="clinical_notes" className="text-primary text-3xl" />
+        <Link to="/visitas" className="bg-surface-lowest shadow-soft rounded-2xl px-3 py-3 flex items-center gap-2 font-semibold text-sm">
+          <Icon name="clinical_notes" className="text-primary text-2xl" />
           Historia clínica
         </Link>
-        <Link to="/visitas/nueva" className="bg-primary text-white shadow-float rounded-3xl p-5 flex flex-col gap-2 font-semibold">
-          <Icon name="add_circle" className="text-3xl" />
+        <Link to="/visitas/nueva" className="bg-primary text-white shadow-float rounded-2xl px-3 py-3 flex items-center gap-2 font-semibold text-sm">
+          <Icon name="add_circle" className="text-2xl" />
           Agregar visita
         </Link>
       </div>

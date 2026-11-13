@@ -26,21 +26,21 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
   const [confirmar, setConfirmar] = useState(false)
   const urgente = esUrgencia(v)
   return (
-    <article className="bg-surface-lowest rounded-3xl shadow-soft p-5">
+    <article className="bg-surface-lowest rounded-2xl shadow-soft p-3">
       <button onClick={() => setAbierta((a) => !a)} className="w-full flex items-start gap-3 text-left">
-        <span className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${urgente ? 'bg-error-container text-error' : 'bg-secondary-container/60 text-secondary'}`}>
+        <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${urgente ? 'bg-error-container text-error' : 'bg-secondary-container/60 text-secondary'}`}>
           <Icon name={urgente ? 'emergency' : v.motivo === 'Control' ? 'child_care' : 'stethoscope'} />
         </span>
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-on-surface-variant">
+          <div className="text-xs text-on-surface-variant">
             {fechaCorta(v.fecha)} · {v.motivo}
           </div>
-          <div className="font-display font-semibold text-lg leading-snug">{v.diagnostico || 'Sin diagnóstico'}</div>
+          <div className="font-display font-semibold leading-snug">{v.diagnostico || 'Sin diagnóstico'}</div>
         </div>
         <Icon name={abierta ? 'expand_less' : 'chevron_right'} className="text-on-surface-variant mt-1" />
       </button>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-on-surface-variant text-sm">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 pl-[3.25rem] text-on-surface-variant text-xs">
         <span className="flex items-center gap-1">
           <Icon name="local_hospital" className="text-base" /> {v.lugar}
         </span>
@@ -151,7 +151,7 @@ export default function Visitas() {
       subtitulo={todos ? 'Todas las visitas de la familia.' : `Visitas de ${h.nombre}.`}
       accion={<Fab to="/visitas/nueva" etiqueta="Registrar visita" />}
     >
-      <Link to="/documento" className="bg-primary-fixed/60 rounded-2xl p-4 mb-4 flex items-center gap-3 font-semibold">
+      <Link to="/documento" className="bg-primary-fixed/60 rounded-xl px-3 py-2.5 mb-3 flex text-sm items-center gap-3 font-semibold">
         <Icon name="document_scanner" className="text-primary" />
         <span className="flex-1">Cargar desde una receta o informe</span>
         <Icon name="chevron_right" className="text-on-surface-variant" />
@@ -160,21 +160,21 @@ export default function Visitas() {
       <div className="relative mb-3">
         <Icon name="search" className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
         <input
-          className="w-full min-h-14 rounded-2xl bg-surface-container pl-12 pr-4 outline-none focus:ring-2 focus:ring-primary-container"
+          className="w-full min-h-11 rounded-xl bg-surface-container pl-12 pr-4 outline-none focus:ring-2 focus:ring-primary-container"
           placeholder="Buscar: otitis, pediatra, CASMU…"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5">
+      <div className="flex gap-1.5 overflow-x-auto pb-1.5 -mx-4 px-4">
         {['Todas', 'Consultas', 'Controles', 'Urgencias'].map((x) => (
           <Chip key={x} activo={filtro === x} onClick={() => setFiltro(x)}>
             {x}
           </Chip>
         ))}
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 mb-4">
+      <div className="flex gap-1.5 overflow-x-auto pb-1.5 -mx-4 px-4 mb-2">
         {hijos.length > 1 && (
           <Chip activo={todos} onClick={() => setTodos((t) => !t)}>
             <span className="flex items-center gap-1">
@@ -205,13 +205,13 @@ export default function Visitas() {
       {grupos.length === 0 && <Vacio icono="search_off" titulo="No hay visitas" texto="Probá con otra búsqueda o filtro." />}
 
       {grupos.map((g) => (
-        <section key={g.mes} className="mb-6">
-          <div className="flex items-center gap-3 my-3">
+        <section key={g.mes} className="mb-4">
+          <div className="flex items-center gap-3 my-2">
             <div className="flex-1 h-px bg-surface-highest" />
             <span className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">{g.mes}</span>
             <div className="flex-1 h-px bg-surface-highest" />
           </div>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {g.items.map((v) => (
               <TarjetaVisita key={v.id} v={v} hijo={hijos.find((x) => x.id === v.hijoId)} mostrarHijo={todos} />
             ))}

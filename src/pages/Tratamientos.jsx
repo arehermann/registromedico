@@ -9,7 +9,7 @@ function Anillo({ avance }) {
   const r = 20
   const c = 2 * Math.PI * r
   return (
-    <svg viewBox="0 0 48 48" className="w-12 h-12 -rotate-90 shrink-0">
+    <svg viewBox="0 0 48 48" className="w-9 h-9 -rotate-90 shrink-0">
       <circle cx="24" cy="24" r={r} fill="none" stroke="var(--color-primary-fixed)" strokeWidth="5" />
       <circle cx="24" cy="24" r={r} fill="none" stroke="var(--color-primary)" strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - avance)} />
     </svg>
@@ -27,36 +27,38 @@ function TarjetaTratamiento({ t }) {
 
   return (
     <Card className={`border-l-[6px] ${borde}`}>
-      <div className="flex items-start gap-4">
-        <span className="w-14 h-14 rounded-2xl bg-primary-fixed text-primary flex items-center justify-center shrink-0">
-          <Icon name={t.tipo === 'cronico' ? 'autorenew' : 'medication_liquid'} className="text-3xl" />
+      <div className="flex items-start gap-3">
+        <span className="w-10 h-10 rounded-xl bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+          <Icon name={t.tipo === 'cronico' ? 'autorenew' : 'medication_liquid'} className="text-2xl" />
         </span>
         <div className="flex-1 min-w-0">
-          <div className="font-display text-xl font-semibold leading-tight">{t.medicamento}</div>
-          <div className="text-sm text-on-surface-variant italic mb-2">{t.tipo === 'cronico' ? 'Tratamiento prolongado' : `Temporal · ${t.duracionDias} días`}</div>
-          <EtiquetaEstado estado={estado} />
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-display text-base font-semibold leading-snug min-w-0">{t.medicamento}</div>
+            <EtiquetaEstado estado={estado} />
+          </div>
+          <div className="text-xs text-on-surface-variant">{t.tipo === 'cronico' ? 'Tratamiento prolongado' : `Temporal · ${t.duracionDias} días`}</div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mt-4">
-        <span className="bg-surface-container rounded-xl px-3 py-1.5 text-sm font-semibold flex items-center gap-1">
-          <Icon name="vaccines" className="text-base text-primary" /> {t.dosis}
+      <div className="flex flex-wrap gap-1.5 mt-2.5 pl-[3.25rem]">
+        <span className="bg-surface-container rounded-lg px-2 py-0.5 text-xs font-semibold flex items-center gap-1">
+          <Icon name="vaccines" className="text-sm text-primary" /> {t.dosis}
         </span>
         {t.cadaHoras && (
-          <span className="bg-surface-container rounded-xl px-3 py-1.5 text-sm font-semibold flex items-center gap-1">
-            <Icon name="schedule" className="text-base text-primary" /> Cada {t.cadaHoras} h
+          <span className="bg-surface-container rounded-lg px-2 py-0.5 text-xs font-semibold flex items-center gap-1">
+            <Icon name="schedule" className="text-sm text-primary" /> Cada {t.cadaHoras} h
           </span>
         )}
         {t.inicio && t.estado !== 'pendiente' && (
-          <span className="bg-surface-container rounded-xl px-3 py-1.5 text-sm font-semibold flex items-center gap-1">
-            <Icon name="event" className="text-base text-primary" /> Desde {fechaCorta(t.inicio)}
+          <span className="bg-surface-container rounded-lg px-2 py-0.5 text-xs font-semibold flex items-center gap-1">
+            <Icon name="event" className="text-sm text-primary" /> Desde {fechaCorta(t.inicio)}
           </span>
         )}
       </div>
 
       {t.estado === 'pendiente' && (
         <Boton
-          className="w-full mt-4"
+          className="w-full mt-3 min-h-11 text-sm"
           icono="play_arrow"
           onClick={() => {
             // Se inicia al dar la primera dosis, así que queda registrada como tomada
@@ -71,30 +73,32 @@ function TarjetaTratamiento({ t }) {
 
       {t.estado === 'en_curso' && (
         <>
-          <div className="bg-surface-low rounded-2xl p-3 mt-4 flex items-center gap-3">
-            {prox ? (
-              <>
-                <Anillo avance={avanceDosis(t)} />
-                <div className="flex-1">
-                  <div className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide">Próxima dosis</div>
-                  <div className="font-display text-2xl font-bold text-primary">{hora(prox.toISOString())}</div>
-                  {ultima && <div className="text-xs text-on-surface-variant">Última toma: {haceCuanto(ultima.fecha).toLowerCase()}</div>}
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 text-sm text-on-surface-variant flex items-center gap-2 min-h-12">
-                <Icon name="notifications_off" /> Sin recordatorios: queda visible en la ficha
+          {prox && (
+            <div className="bg-surface-low rounded-xl px-3 py-2 mt-3 flex items-center gap-3">
+              <Anillo avance={avanceDosis(t)} />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-on-surface-variant">Próxima dosis</div>
+                {ultima && <div className="text-xs text-on-surface-variant">Última: {haceCuanto(ultima.fecha).toLowerCase()}</div>}
               </div>
-            )}
+              <div className="font-display text-xl font-bold text-primary">{hora(prox.toISOString())}</div>
+            </div>
+          )}
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-surface-high">
+            <Interruptor
+              className="flex-1"
+              etiqueta="Recordatorios"
+              detalle={t.notificaciones ? null : 'Apagados'}
+              activo={t.notificaciones}
+              onChange={(v) => actualizarTratamiento(t.id, { notificaciones: v })}
+            />
+            <span className="w-px h-6 bg-surface-high" />
+            <button
+              onClick={() => actualizarTratamiento(t.id, { estado: 'finalizado', fin: new Date().toISOString() })}
+              className="min-h-10 px-3 rounded-full text-sm font-semibold text-primary flex items-center gap-1 shrink-0"
+            >
+              <Icon name="check" className="text-lg" /> Finalizar
+            </button>
           </div>
-          <Interruptor
-            etiqueta="Recordatorios"
-            activo={t.notificaciones}
-            onChange={(v) => actualizarTratamiento(t.id, { notificaciones: v })}
-          />
-          <Boton variante="secundario" className="w-full text-sm" icono="check" onClick={() => actualizarTratamiento(t.id, { estado: 'finalizado', fin: new Date().toISOString() })}>
-            Finalizar tratamiento
-          </Boton>
         </>
       )}
 
@@ -177,22 +181,22 @@ export default function Tratamientos() {
   ]
 
   return (
-    <Pagina titulo={`Tratamientos de ${h.nombre}`} accion={<Fab to="/tratamientos/nuevo" icono="add_task" etiqueta="Agregar tratamiento" />}>
+    <Pagina titulo="Tratamientos" accion={<Fab to="/tratamientos/nuevo" icono="add_task" etiqueta="Agregar tratamiento" />}>
       <DosisPendientes hijoId={h.id} />
 
       {condiciones.length > 0 && (
         <Seccion titulo="Condiciones activas">
-          <div className="space-y-3">
+          <div className="bg-surface-low rounded-2xl divide-y divide-surface-high">
             {condiciones.map((c) => (
-              <div key={c.tipo + c.nombre} className="bg-surface-low rounded-3xl p-4 flex items-center gap-4">
-                <span className={`w-12 h-12 rounded-full flex items-center justify-center ${c.tono}`}>
-                  <Icon name={c.icono} />
+              <div key={c.tipo + c.nombre} className="px-3 py-2 flex items-center gap-3">
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${c.tono}`}>
+                  <Icon name={c.icono} className="text-lg" />
                 </span>
-                <div className="flex-1">
-                  <div className={`text-xs font-bold uppercase tracking-wider ${c.color}`}>{c.tipo}</div>
-                  <div className="font-display text-lg font-semibold">{c.nombre}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold leading-tight">{c.nombre}</div>
+                  <div className={`text-[11px] font-bold uppercase tracking-wider ${c.color}`}>{c.tipo}</div>
                 </div>
-                <span className="text-xs font-semibold bg-surface-highest rounded-full px-3 py-1">{c.estado}</span>
+                <span className="text-xs font-semibold bg-surface-highest rounded-full px-2.5 py-0.5">{c.estado}</span>
               </div>
             ))}
           </div>
@@ -201,7 +205,7 @@ export default function Tratamientos() {
 
       <Seccion titulo="En curso">
         {enCurso.length ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {enCurso.map((t) => (
               <TarjetaTratamiento key={t.id} t={t} />
             ))}
@@ -213,7 +217,7 @@ export default function Tratamientos() {
 
       {pendientes.length > 0 && (
         <Seccion titulo="Precargados, sin iniciar">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {pendientes.map((t) => (
               <TarjetaTratamiento key={t.id} t={t} />
             ))}
@@ -224,15 +228,15 @@ export default function Tratamientos() {
       <Seccion
         titulo="Medicación de rescate"
         accion={
-          <button onClick={() => setParams({ rescate: '1' })} className="w-11 h-11 rounded-full bg-primary-fixed text-primary flex items-center justify-center" aria-label="Registrar rescate">
+          <button onClick={() => setParams({ rescate: '1' })} className="w-9 h-9 rounded-full bg-primary-fixed text-primary flex items-center justify-center" aria-label="Registrar rescate">
             <Icon name="add" />
           </button>
         }
       >
         {rescatesHijo.length ? (
-          <div className="bg-surface-lowest rounded-3xl shadow-soft divide-y divide-surface-high">
+          <div className="bg-surface-lowest rounded-2xl shadow-soft divide-y divide-surface-high">
             {rescatesHijo.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 p-4">
+              <div key={r.id} className="flex items-center gap-3 px-3 py-2.5">
                 <Icon name="medication" className="text-secondary" />
                 <div className="flex-1">
                   <div className="font-semibold">{r.medicamento}</div>
@@ -249,11 +253,11 @@ export default function Tratamientos() {
 
       {finalizados.length > 0 && (
         <section>
-          <button onClick={() => setVerFinalizados((v) => !v)} className="flex items-center gap-2 font-semibold text-on-surface-variant min-h-12">
+          <button onClick={() => setVerFinalizados((v) => !v)} className="flex items-center gap-2 font-semibold text-on-surface-variant min-h-11">
             <Icon name={verFinalizados ? 'expand_less' : 'expand_more'} /> Finalizados ({finalizados.length})
           </button>
           {verFinalizados && (
-            <div className="space-y-4 mt-2 opacity-80">
+            <div className="space-y-3 mt-1 opacity-80">
               {finalizados.map((t) => (
                 <TarjetaTratamiento key={t.id} t={t} />
               ))}
