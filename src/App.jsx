@@ -96,6 +96,14 @@ export default function App() {
                 }
               />
               <Route
+                path="/tratamientos/:id/editar"
+                element={
+                  <ConHijo>
+                    <NuevoTratamiento editar />
+                  </ConHijo>
+                }
+              />
+              <Route
                 path="/tratamientos/nuevo"
                 element={
                   <ConHijo>
@@ -116,6 +124,14 @@ export default function App() {
                 element={
                   <ConHijo>
                     <LeerDocumento />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/visitas/:id/editar"
+                element={
+                  <ConHijo>
+                    <NuevaVisita editar />
                   </ConHijo>
                 }
               />

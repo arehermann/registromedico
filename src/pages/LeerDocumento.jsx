@@ -4,7 +4,7 @@ import { Boton, Icon, Interruptor, Pagina } from '../components/ui'
 import { useStore } from '../data/store'
 import { pesoLegible, prepararArchivo } from '../data/archivos'
 import { iaConfigurada, leerDocumento } from '../data/ia'
-import { fechaCorta } from '../data/fechas'
+import { fechaCorta, hoy } from '../data/fechas'
 
 export function Miniatura({ a, onQuitar, onAbrir }) {
   return (
@@ -58,7 +58,7 @@ export default function LeerDocumento() {
       const r = await leerDocumento(lecturaIA, archivos, {
         hijo: { nombre: h.nombre, nacimiento: h.nacimiento || null },
         lugares: proveedores.filter((p) => p !== 'Otro'),
-        hoy: new Date().toISOString().slice(0, 10),
+        hoy: hoy(),
       })
       setResultado(r.datos)
       setEstado('listo')

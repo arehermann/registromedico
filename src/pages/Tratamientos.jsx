@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Boton, Campo, EtiquetaEstado, Fab, Fila, Icon, Interruptor, Lista, Pagina, Seccion, useAviso } from '../components/ui'
 import { useStore } from '../data/store'
 import { estadoTratamiento, fechaCorta, haceCuanto, hora, proximaDosis } from '../data/fechas'
@@ -53,21 +53,21 @@ function FilaTratamiento({ t }) {
             </Boton>
           )}
 
-          {t.estado === 'en_curso' && (
-            <>
-              <Interruptor etiqueta="Recordatorios" activo={t.notificaciones} onChange={(v) => actualizarTratamiento(t.id, { notificaciones: v })} />
+          {t.estado === 'en_curso' && <Interruptor etiqueta="Recordatorios" activo={t.notificaciones} onChange={(v) => actualizarTratamiento(t.id, { notificaciones: v })} />}
+
+          <div className="flex items-center justify-between gap-2">
+            <Link to={`/tratamientos/${t.id}/editar`} className="min-h-10 font-semibold text-primary flex items-center gap-1">
+              <Icon name="edit" className="text-lg" /> Editar
+            </Link>
+            {t.estado === 'en_curso' ? (
               <button
                 onClick={() => actualizarTratamiento(t.id, { estado: 'finalizado', fin: new Date().toISOString() })}
                 className="min-h-10 font-semibold text-primary flex items-center gap-1"
               >
-                <Icon name="check" className="text-lg" /> Finalizar tratamiento
+                <Icon name="check" className="text-lg" /> Finalizar
               </button>
-            </>
-          )}
-
-          {t.estado !== 'en_curso' &&
-            (confirmar ? (
-              <div className="flex gap-2 pt-1">
+            ) : confirmar ? (
+              <div className="flex gap-2">
                 <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full font-semibold bg-surface-container">
                   Cancelar
                 </button>
@@ -79,7 +79,8 @@ function FilaTratamiento({ t }) {
               <button onClick={() => setConfirmar(true)} className="font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
                 <Icon name="delete" className="text-lg" /> Eliminar
               </button>
-            ))}
+            )}
+          </div>
         </div>
       )}
     </div>

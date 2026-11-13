@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Chip, Fab, Icon, Lista, Pagina, Seccion, Vacio } from '../components/ui'
 import { Miniatura } from './LeerDocumento'
 import { abrirAdjunto } from '../data/archivos'
@@ -69,6 +70,11 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
             </Detalle>
           )}
           {v.proximoControl && <Detalle etiqueta="Próximo control">{v.proximoControl}</Detalle>}
+          {v.notas && (
+            <Detalle etiqueta="Notas">
+              <p className="whitespace-pre-line">{v.notas}</p>
+            </Detalle>
+          )}
           {docs.length > 0 && (
             <Detalle etiqueta="Documentos">
               <div className="space-y-2 mt-1">
@@ -78,7 +84,10 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
               </div>
             </Detalle>
           )}
-          <div className="flex justify-end pt-1">
+          <div className="flex justify-between items-center pt-1">
+            <Link to={`/visitas/${v.id}/editar`} className="text-sm font-semibold text-primary flex items-center gap-1 min-h-10">
+              <Icon name="edit" /> Editar
+            </Link>
             {confirmar ? (
               <div className="flex gap-2">
                 <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-surface-lowest">
@@ -115,7 +124,7 @@ export default function Visitas() {
     .filter((v) => filtro === 'Todas' || (filtro === 'Urgencias' ? esUrgencia(v) : v.motivo === { Consultas: 'Consulta', Controles: 'Control' }[filtro]))
     .filter((v) => !desde || v.fecha >= desde)
     .filter((v) => !hasta || v.fecha <= hasta)
-    .filter((v) => !q || [v.diagnostico, v.medico, v.lugar, v.especialidad, ...(v.procedimientos ?? [])].join(' ').toLowerCase().includes(q))
+    .filter((v) => !q || [v.diagnostico, v.medico, v.lugar, v.especialidad, v.notas, ...(v.procedimientos ?? [])].join(' ').toLowerCase().includes(q))
     .sort((a, b) => b.fecha.localeCompare(a.fecha))
 
   // Agrupar por mes

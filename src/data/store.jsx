@@ -100,11 +100,13 @@ export function StoreProvider({ children }) {
       actualizarHijo: (id, cambios) => actualizar('hijos', id, cambios),
       eliminarHijo,
       agregarVisita: (campos) => crear('visitas', 'v', campos),
+      actualizarVisita: (id, cambios) => actualizar('visitas', id, cambios),
       eliminarVisita(id) {
         borrar('visitas', id)
         datos.adjuntos.filter((a) => a.visitaId === id && !a.borrado).forEach((a) => borrar('adjuntos', a.id))
       },
       agregarAdjunto: (campos) => crear('adjuntos', 'a', campos),
+      eliminarAdjunto: (id) => borrar('adjuntos', id),
       agregarTratamiento: (campos) => crear('tratamientos', 't', campos),
       actualizarTratamiento: (id, cambios) => actualizar('tratamientos', id, cambios),
       eliminarTratamiento: (id) => borrar('tratamientos', id),

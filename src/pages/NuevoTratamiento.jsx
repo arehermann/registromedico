@@ -1,27 +1,50 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Boton, Campo, Chip, Interruptor, Pagina } from '../components/ui'
 import { useStore } from '../data/store'
 
-export default function NuevoTratamiento() {
-  const { hijoActivo: h, agregarTratamiento } = useStore()
+export default function NuevoTratamiento({ editar = false }) {
+  const { hijoActivo: h, tratamientos } = useStore()
+  const { id } = useParams()
+  const existente = editar ? tratamientos.find((t) => t.id === id) : null
+  if (editar && !existente) return <Pagina titulo="Tratamiento no encontrado" volver />
+  return <Formulario key={id ?? 'nuevo'} h={h} existente={existente} />
+}
+
+const texto = (v) => (v == null ? '' : String(v))
+
+function Formulario({ h, existente }) {
+  const { agregarTratamiento, actualizarTratamiento } = useStore()
   const navigate = useNavigate()
-  const [f, setF] = useState({ medicamento: '', dosis: '', cadaHoras: '8', duracionDias: '7' })
-  const [cronico, setCronico] = useState(false)
-  const [notificaciones, setNotificaciones] = useState(true)
+  const [f, setF] = useState(() =>
+    existente
+      ? { medicamento: texto(existente.medicamento), dosis: texto(existente.dosis), cadaHoras: texto(existente.cadaHoras), duracionDias: texto(existente.duracionDias || '7'), indicaciones: texto(existente.indicaciones) }
+      : { medicamento: '', dosis: '', cadaHoras: '8', duracionDias: '7', indicaciones: '' },
+  )
+  const [cronico, setCronico] = useState(existente ? !existente.duracionDias : false)
+  const [notificaciones, setNotificaciones] = useState(existente ? Boolean(existente.notificaciones) : true)
   const [iniciarAhora, setIniciarAhora] = useState(true)
   const cambiar = (k) => (e) => setF({ ...f, [k]: e.target.value })
 
   const guardar = (e) => {
     e.preventDefault()
-    agregarTratamiento({
-      hijoId: h.id,
-      medicamento: f.medicamento,
+    const campos = {
+      medicamento: f.medicamento.trim(),
       dosis: f.dosis,
       cadaHoras: Number(f.cadaHoras) || null,
       duracionDias: cronico ? null : Number(f.duracionDias) || null,
+      indicaciones: f.indicaciones.trim() || undefined,
       tipo: cronico ? 'cronico' : 'temporal',
       notificaciones,
+    }
+    if (existente) {
+      actualizarTratamiento(existente.id, campos)
+      navigate(-1)
+      return
+    }
+    agregarTratamiento({
+      hijoId: h.id,
+      ...campos,
       inicio: iniciarAhora ? new Date().toISOString() : null,
       estado: iniciarAhora ? 'en_curso' : 'pendiente',
     })
@@ -29,7 +52,7 @@ export default function NuevoTratamiento() {
   }
 
   return (
-    <Pagina titulo="Nuevo tratamiento" subtitulo={`Para ${h.nombre}`} volver>
+    <Pagina titulo={existente ? 'Editar tratamiento' : 'Nuevo tratamiento'} subtitulo={`Para ${h.nombre}`} volver>
       <form onSubmit={guardar} className="space-y-6">
         <div className="bg-surface-lowest rounded-3xl shadow-soft p-5 space-y-4">
           <Campo etiqueta="Medicamento" icono="medication">
@@ -50,6 +73,11 @@ export default function NuevoTratamiento() {
               </Chip>
             ))}
           </div>
+          {(existente || f.indicaciones) && (
+            <Campo etiqueta="Indicaciones">
+              <input className="campo" placeholder="Ej. Después de comer" value={f.indicaciones} onChange={cambiar('indicaciones')} />
+            </Campo>
+          )}
         </div>
 
         <div className="bg-surface-lowest rounded-3xl shadow-soft p-5 space-y-3">
@@ -60,14 +88,14 @@ export default function NuevoTratamiento() {
             </Campo>
           )}
           <Interruptor etiqueta="Recordatorios de cada toma" activo={notificaciones} onChange={setNotificaciones} />
-          <Interruptor etiqueta="Iniciar ahora" activo={iniciarAhora} onChange={setIniciarAhora} />
-          {!iniciarAhora && (
+          {!existente && <Interruptor etiqueta="Iniciar ahora" activo={iniciarAhora} onChange={setIniciarAhora} />}
+          {!existente && !iniciarAhora && (
             <p className="text-sm text-on-surface-variant">Queda precargado. Cuando lo empiecen, tocá “Iniciar tratamiento” y los avisos arrancan desde ese momento.</p>
           )}
         </div>
 
         <Boton type="submit" icono="save" className="w-full uppercase tracking-wide">
-          Guardar tratamiento
+          {existente ? 'Guardar cambios' : 'Guardar tratamiento'}
         </Boton>
       </form>
     </Pagina>
