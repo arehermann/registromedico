@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Avatar, Boton, Campo, Card, EtiquetaEstado, Icon, Pagina, Seccion, Vacio } from '../components/ui'
+import { Avatar, Boton, Campo, Card, EtiquetaEstado, Fila, Icon, Lista, Pagina, Seccion, Vacio } from '../components/ui'
 import { useStore } from '../data/store'
 import { edad, estadoTratamiento, fechaCorta } from '../data/fechas'
 
@@ -25,93 +25,70 @@ export default function Perfil() {
     .filter((v) => v.hijoId === h.id && v.proximoControl)
     .sort((a, b) => b.fecha.localeCompare(a.fecha))[0]
 
+  const chevron = <Icon name="chevron_right" className="text-on-surface-variant" />
+
   return (
     <Pagina>
       <div className="flex items-center gap-3 mb-4">
         <Avatar hijo={h} size="w-12 h-12" texto="text-xl" />
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl leading-8 font-bold">{h.nombre}</h1>
-          <p className="text-on-surface-variant text-sm font-semibold">
-            {edad(h.nacimiento)} · nació el {fechaCorta(h.nacimiento)}
+          <p className="text-on-surface-variant text-sm">
+            {edad(h.nacimiento)} · {fechaCorta(h.nacimiento)}
+            {h.cedula && ` · C.I. ${h.cedula}`}
           </p>
-          {h.cedula && <p className="text-on-surface-variant text-xs">C.I. {h.cedula}</p>}
         </div>
-        <Link to="/hijo/editar" className="w-10 h-10 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0" aria-label="Editar ficha">
+        <Link to="/hijo/editar" className="w-10 h-10 rounded-full text-primary flex items-center justify-center shrink-0" aria-label="Editar ficha">
           <Icon name="edit" />
         </Link>
       </div>
 
-      {/* Bloque de emergencia */}
-      <div className="rounded-2xl bg-primary-container text-white p-4 mb-4 shadow-float">
-        <div className="flex items-center gap-2 text-sm font-semibold opacity-90 mb-2">
-          <Icon name="emergency" /> Datos para emergencia
+      {/* Lo de emergencia, en texto simple y bien visible */}
+      <div className="rounded-2xl bg-primary-container text-white px-4 py-3 mb-6 space-y-1">
+        <div className="text-xs font-semibold uppercase tracking-wider opacity-80">Emergencia</div>
+        <div className="flex items-baseline gap-2">
+          <span className="opacity-80 text-sm">Sangre</span>
+          <b className="text-lg">{h.grupoSanguineo || '—'}</b>
         </div>
-        <div className="flex items-stretch gap-3">
-          <div className="bg-white/15 rounded-xl px-3 py-2 text-center">
-            <div className="text-xs opacity-90">Sangre</div>
-            <div className="font-display text-2xl font-bold">{h.grupoSanguineo || '—'}</div>
-          </div>
-          <div className="flex-1 bg-white/15 rounded-xl px-3 py-2">
-            <div className="text-xs opacity-90 mb-1">Alergias</div>
-            {h.alergias.length ? (
-              <div className="flex flex-wrap gap-1.5">
-                {h.alergias.map((a) => (
-                  <span key={a} className="bg-white text-on-error-container font-semibold text-sm rounded-full px-2.5 py-0.5">
-                    {a}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <div className="font-semibold">Sin alergias conocidas</div>
-            )}
-          </div>
+        <div className="text-sm">
+          <span className="opacity-80">Alergias: </span>
+          <b>{h.alergias.length ? h.alergias.join(', ') : 'ninguna conocida'}</b>
         </div>
         {h.condiciones?.length > 0 && (
-          <div className="mt-3 text-sm">
-            <span className="opacity-90">Condiciones: </span>
+          <div className="text-sm">
+            <span className="opacity-80">Condiciones: </span>
             <b>{h.condiciones.map((c) => c.nombre).join(', ')}</b>
           </div>
         )}
       </div>
 
-      <Card className="mb-4 !py-3">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="font-bold">Medidas</h2>
-          <button onClick={() => setEditando((e) => !e)} className="text-primary font-semibold text-sm flex items-center gap-1 min-h-10">
-            <Icon name={editando ? 'close' : 'edit'} className="text-lg" /> {editando ? 'Cerrar' : 'Actualizar'}
+      <Seccion
+        titulo="Datos"
+        accion={
+          <button onClick={() => setEditando((e) => !e)} className="text-primary font-semibold text-sm min-h-8">
+            {editando ? 'Cerrar' : 'Actualizar medidas'}
           </button>
-        </div>
+        }
+      >
         {editando ? (
-          <EditarMedidas hijo={h} onListo={() => setEditando(false)} />
+          <Card>
+            <EditarMedidas hijo={h} onListo={() => setEditando(false)} />
+          </Card>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-surface-low rounded-xl px-3 py-2 flex items-center gap-2">
-              <Icon name="scale" className="text-secondary" />
-              <div>
-                <div className="text-xs text-on-surface-variant">Peso</div>
-                <div className="font-bold">{h.peso} kg</div>
-              </div>
-            </div>
-            <div className="bg-surface-low rounded-xl px-3 py-2 flex items-center gap-2">
-              <Icon name="height" className="text-tertiary" />
-              <div>
-                <div className="text-xs text-on-surface-variant">Altura</div>
-                <div className="font-bold">{h.altura} cm</div>
-              </div>
-            </div>
-          </div>
+          <Lista>
+            <Fila titulo="Peso" derecha={<span className="font-semibold">{h.peso} kg</span>} />
+            <Fila titulo="Altura" derecha={<span className="font-semibold">{h.altura} cm</span>} />
+            <Fila
+              titulo="Vacunas"
+              derecha={<span className={`font-semibold ${h.vacunasAlDia ? 'text-secondary' : 'text-tertiary'}`}>{h.vacunasAlDia ? 'Al día' : 'Pendientes'}</span>}
+            />
+            {h.prematuro && <Fila titulo="Prematuro" derecha={<span className="font-semibold">Sí</span>} />}
+          </Lista>
         )}
-        <div className="flex gap-2 mt-2 text-xs">
-          <span className={`rounded-full px-2.5 py-0.5 font-semibold ${h.vacunasAlDia ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-fixed text-tertiary'}`}>
-            {h.vacunasAlDia ? 'Vacunas al día' : 'Vacunas pendientes'}
-          </span>
-          {h.prematuro && <span className="rounded-full px-2.5 py-0.5 font-semibold bg-primary-fixed text-primary">Prematuro</span>}
-        </div>
-      </Card>
+      </Seccion>
 
       <Seccion
-        icono="prescriptions"
-        titulo="Tratamientos activos"
+        titulo="Tratamientos en curso"
         accion={
           <Link to="/tratamientos" className="text-primary font-semibold text-sm">
             Ver todos
@@ -119,51 +96,29 @@ export default function Perfil() {
         }
       >
         {activos.length ? (
-          <div className="space-y-2">
+          <Lista>
             {activos.map((t) => (
-              <Card key={t.id} className="!px-3 !py-2.5 flex items-center gap-3">
-                <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${t.tipo === 'cronico' ? 'bg-primary-fixed text-primary' : 'bg-tertiary-fixed text-tertiary'}`}>
-                  <Icon name={t.tipo === 'cronico' ? 'autorenew' : 'medication'} />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{t.medicamento}</div>
-                  <div className="text-xs text-on-surface-variant">
-                    {t.dosis}
-                    {t.cadaHoras ? ` · cada ${t.cadaHoras} h` : ''}
-                  </div>
-                </div>
-                <EtiquetaEstado estado={estadoTratamiento(t)} />
-              </Card>
+              <Fila
+                key={t.id}
+                to="/tratamientos"
+                titulo={t.medicamento}
+                detalle={[t.dosis, t.cadaHoras && `cada ${t.cadaHoras} h`].filter(Boolean).join(' · ')}
+                derecha={<EtiquetaEstado estado={estadoTratamiento(t)} />}
+              />
             ))}
-          </div>
+          </Lista>
         ) : (
-          <p className="text-on-surface-variant">No tiene tratamientos en curso.</p>
+          <p className="text-on-surface-variant px-1">No tiene tratamientos en curso.</p>
         )}
       </Seccion>
 
       {ultimaConControl && (
-        <Card className="mb-4 !bg-tertiary-fixed/60 flex items-start gap-3">
-          <Icon name="event_upcoming" className="text-tertiary" />
-          <div>
-            <div className="text-xs font-semibold text-tertiary uppercase tracking-wide">Próximo control</div>
-            <div className="font-semibold">{ultimaConControl.proximoControl}</div>
-            <div className="text-sm text-on-surface-variant">
-              Indicado el {fechaCorta(ultimaConControl.fecha)} en {ultimaConControl.lugar}
-            </div>
-          </div>
-        </Card>
+        <Seccion titulo="Próximo control">
+          <Lista>
+            <Fila to="/visitas" titulo={ultimaConControl.proximoControl} detalle={`Indicado el ${fechaCorta(ultimaConControl.fecha)} en ${ultimaConControl.lugar}`} derecha={chevron} />
+          </Lista>
+        </Seccion>
       )}
-
-      <div className="grid grid-cols-2 gap-3">
-        <Link to="/visitas" className="bg-surface-lowest shadow-soft rounded-2xl px-3 py-3 flex items-center gap-2 font-semibold text-sm">
-          <Icon name="clinical_notes" className="text-primary text-2xl" />
-          Historia clínica
-        </Link>
-        <Link to="/visitas/nueva" className="bg-primary text-white shadow-float rounded-2xl px-3 py-3 flex items-center gap-2 font-semibold text-sm">
-          <Icon name="add_circle" className="text-2xl" />
-          Agregar visita
-        </Link>
-      </div>
     </Pagina>
   )
 }

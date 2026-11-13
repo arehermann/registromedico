@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Avatar, Chip, Fab, Icon, Pagina, Vacio } from '../components/ui'
+import { Chip, Fab, Icon, Lista, Pagina, Seccion, Vacio } from '../components/ui'
 import { Miniatura } from './LeerDocumento'
 import { abrirAdjunto } from '../data/archivos'
 import { useStore } from '../data/store'
@@ -25,51 +24,33 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
   const [abierta, setAbierta] = useState(false)
   const [confirmar, setConfirmar] = useState(false)
   const urgente = esUrgencia(v)
+  const [dia, mes] = fechaCorta(v.fecha).split(' ')
   return (
-    <article className="bg-surface-lowest rounded-2xl shadow-soft p-3">
-      <button onClick={() => setAbierta((a) => !a)} className="w-full flex items-start gap-3 text-left">
-        <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${urgente ? 'bg-error-container text-error' : 'bg-secondary-container/60 text-secondary'}`}>
-          <Icon name={urgente ? 'emergency' : v.motivo === 'Control' ? 'child_care' : 'stethoscope'} />
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-on-surface-variant">
-            {fechaCorta(v.fecha)} · {v.motivo}
-          </div>
-          <div className="font-display font-semibold leading-snug">{v.diagnostico || 'Sin diagnóstico'}</div>
+    <div>
+      <button onClick={() => setAbierta((a) => !a)} className="w-full flex items-center gap-3 px-4 py-3 text-left min-h-14">
+        <div className="w-10 text-center shrink-0">
+          <div className="text-lg font-semibold leading-none">{dia}</div>
+          <div className="text-[11px] text-on-surface-variant uppercase">{mes.replace('.', '')}</div>
         </div>
-        <Icon name={abierta ? 'expand_less' : 'chevron_right'} className="text-on-surface-variant mt-1" />
+        <div className="flex-1 min-w-0">
+          <div className="font-medium leading-snug">{v.diagnostico || 'Sin diagnóstico'}</div>
+          <div className="text-sm text-on-surface-variant truncate flex items-center gap-1">
+            {urgente && <span className="w-2 h-2 rounded-full bg-error shrink-0" />}
+            <span className="truncate">{[v.motivo, v.lugar, v.medico, mostrarHijo && hijo?.nombre].filter(Boolean).join(' · ')}</span>
+            {docs.length > 0 && <Icon name="attach_file" className="text-sm" />}
+          </div>
+        </div>
+        <Icon name={abierta ? 'expand_less' : 'expand_more'} className="text-on-surface-variant shrink-0" />
       </button>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 pl-[3.25rem] text-on-surface-variant text-xs">
-        <span className="flex items-center gap-1">
-          <Icon name="local_hospital" className="text-base" /> {v.lugar}
-        </span>
-        {v.medico && (
-          <span className="flex items-center gap-1">
-            <Icon name="person" className="text-base" /> {v.medico}
-          </span>
-        )}
-        {docs.length > 0 && (
-          <span className="flex items-center gap-1">
-            <Icon name="attach_file" className="text-base" /> {docs.length}
-          </span>
-        )}
-        {mostrarHijo && hijo && (
-          <span className="flex items-center gap-1.5">
-            <Avatar hijo={hijo} size="w-5 h-5" texto="text-[10px]" /> {hijo.nombre}
-          </span>
-        )}
-      </div>
-
       {abierta && (
-        <div className="mt-4 bg-surface-low rounded-2xl p-4 space-y-3">
+        <div className="px-4 pb-3 pl-[4.25rem] space-y-2 text-sm">
           <Detalle etiqueta="Especialidad">{v.especialidad || '—'}</Detalle>
-          <Detalle etiqueta="Diagnóstico">{v.diagnostico || '—'}</Detalle>
           <Detalle etiqueta="Procedimientos">
             {v.procedimientos?.length ? (
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {v.procedimientos.map((p) => (
-                  <span key={p} className="bg-surface-lowest rounded-lg px-2.5 py-1 text-sm font-medium">
+                  <span key={p} className="bg-surface-container rounded-lg px-2 py-0.5 text-sm">
                     {p}
                   </span>
                 ))}
@@ -115,7 +96,7 @@ function TarjetaVisita({ v, hijo, mostrarHijo }) {
           </div>
         </div>
       )}
-    </article>
+    </div>
   )
 }
 
@@ -147,45 +128,33 @@ export default function Visitas() {
 
   return (
     <Pagina
-      titulo="Historia clínica"
-      subtitulo={todos ? 'Todas las visitas de la familia.' : `Visitas de ${h.nombre}.`}
+      titulo="Visitas"
+      subtitulo={todos ? 'De toda la familia' : null}
       accion={<Fab to="/visitas/nueva" etiqueta="Registrar visita" />}
     >
-      <Link to="/documento" className="bg-primary-fixed/60 rounded-xl px-3 py-2.5 mb-3 flex text-sm items-center gap-3 font-semibold">
-        <Icon name="document_scanner" className="text-primary" />
-        <span className="flex-1">Cargar desde una receta o informe</span>
-        <Icon name="chevron_right" className="text-on-surface-variant" />
-      </Link>
-
-      <div className="relative mb-3">
-        <Icon name="search" className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+      <div className="relative mb-2">
+        <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
         <input
-          className="w-full min-h-11 rounded-xl bg-surface-container pl-12 pr-4 outline-none focus:ring-2 focus:ring-primary-container"
-          placeholder="Buscar: otitis, pediatra, CASMU…"
+          className="w-full min-h-11 rounded-xl bg-surface-lowest pl-10 pr-4 outline-none focus:ring-2 focus:ring-primary-container"
+          placeholder="Buscar"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
         />
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1.5 -mx-4 px-4">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-4 px-4 mb-3">
         {['Todas', 'Consultas', 'Controles', 'Urgencias'].map((x) => (
           <Chip key={x} activo={filtro === x} onClick={() => setFiltro(x)}>
             {x}
           </Chip>
         ))}
-      </div>
-      <div className="flex gap-1.5 overflow-x-auto pb-1.5 -mx-4 px-4 mb-2">
         {hijos.length > 1 && (
           <Chip activo={todos} onClick={() => setTodos((t) => !t)}>
-            <span className="flex items-center gap-1">
-              <Icon name="group" className="text-base" /> Todos los hijos
-            </span>
+            Todos los hijos
           </Chip>
         )}
         <Chip activo={verFechas || desde || hasta} onClick={() => setVerFechas((v) => !v)}>
-          <span className="flex items-center gap-1">
-            <Icon name="date_range" className="text-base" /> Fechas
-          </span>
+          Fechas
         </Chip>
       </div>
 
@@ -205,18 +174,13 @@ export default function Visitas() {
       {grupos.length === 0 && <Vacio icono="search_off" titulo="No hay visitas" texto="Probá con otra búsqueda o filtro." />}
 
       {grupos.map((g) => (
-        <section key={g.mes} className="mb-4">
-          <div className="flex items-center gap-3 my-2">
-            <div className="flex-1 h-px bg-surface-highest" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">{g.mes}</span>
-            <div className="flex-1 h-px bg-surface-highest" />
-          </div>
-          <div className="space-y-2">
+        <Seccion key={g.mes} titulo={g.mes}>
+          <Lista>
             {g.items.map((v) => (
               <TarjetaVisita key={v.id} v={v} hijo={hijos.find((x) => x.id === v.hijoId)} mostrarHijo={todos} />
             ))}
-          </div>
-        </section>
+          </Lista>
+        </Seccion>
       ))}
     </Pagina>
   )

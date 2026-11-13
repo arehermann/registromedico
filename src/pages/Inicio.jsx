@@ -1,33 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Avatar, Boton, Icon, Pagina } from '../components/ui'
+import { Avatar, Boton, Fila, Icon, Lista, Pagina } from '../components/ui'
 import { ActivarRecordatorios, DosisPendientes, InstalarApp } from '../components/avisos'
 import { useStore } from '../data/store'
-import { edad, hora, proximaDosis } from '../data/fechas'
-
-function Dato({ icono, color, etiqueta, valor }) {
-  return (
-    <div className="bg-surface-lowest/80 rounded-xl py-1.5 px-2 flex items-center justify-center gap-1.5">
-      <Icon name={icono} className={`text-base ${color}`} />
-      <div className="font-bold text-sm" title={etiqueta}>{valor}</div>
-    </div>
-  )
-}
+import { edad } from '../data/fechas'
 
 export default function Inicio() {
-  const { hijos, tratamientos, setHijoActivoId, cargarEjemplo } = useStore()
+  const { hijos, setHijoActivoId, cargarEjemplo } = useStore()
   const navigate = useNavigate()
 
   const abrir = (id, ruta = '/perfil') => {
     setHijoActivoId(id)
     navigate(ruta)
   }
-
-  // Próximas tomas de todos los hijos, para tenerlas a la vista al abrir la app
-  const proximas = tratamientos
-    .map((t) => ({ t, cuando: proximaDosis(t) }))
-    .filter((x) => x.cuando && x.t.notificaciones)
-    .sort((a, b) => a.cuando - b.cuando)
-    .slice(0, 2)
 
   if (!hijos.length)
     return (
@@ -55,77 +39,39 @@ export default function Inicio() {
     )
 
   return (
-    <Pagina titulo="Mis pacientes">
+    <Pagina titulo="Mis hijos">
       <InstalarApp />
       <ActivarRecordatorios />
       <DosisPendientes mostrarNombre />
-      {proximas.length > 0 && (
-        <div className="mb-4 space-y-2">
-          {proximas.map(({ t, cuando }) => {
-            const hijo = hijos.find((h) => h.id === t.hijoId)
-            return (
-              <button
-                key={t.id}
-                onClick={() => abrir(t.hijoId, '/tratamientos')}
-                className="w-full flex items-center gap-3 bg-primary-container text-white rounded-xl px-3 py-2 text-left"
-              >
-                <Icon name="notifications_active" fill />
-                <span className="flex-1 text-sm">
-                  <b>{hijo?.nombre}</b>: {t.medicamento} {t.dosis}
-                </span>
-                <span className="font-display font-bold">{hora(cuando.toISOString())}</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
 
-      <div className="space-y-3">
+      <Lista className="mb-6">
         {hijos.map((h) => (
-          <button
+          <Fila
             key={h.id}
             onClick={() => abrir(h.id)}
-            className="w-full text-left bg-surface-container rounded-2xl p-3 shadow-soft active:shadow-none active:scale-[0.99] transition"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <Avatar hijo={h} size="w-10 h-10" texto="text-base" />
-              <div className="flex-1">
-                <div className="font-display text-lg font-semibold leading-tight">{h.nombre}</div>
-                <div className="text-on-surface-variant text-xs font-semibold">{edad(h.nacimiento)}</div>
-              </div>
-              {h.alergias.length > 0 && (
-                <span className="flex items-center gap-1 text-xs font-semibold bg-error-container text-on-error-container rounded-full px-2.5 py-0.5">
-                  <Icon name="warning" className="text-base" /> Alergias
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Dato icono="scale" color="text-secondary" etiqueta="Peso" valor={`${h.peso} kg`} />
-              <Dato icono="height" color="text-tertiary" etiqueta="Altura" valor={`${h.altura} cm`} />
-              <Dato icono="water_drop" color="text-error" etiqueta="Sangre" valor={h.grupoSanguineo} />
-            </div>
-          </button>
+            izquierda={<Avatar hijo={h} size="w-10 h-10" texto="text-base" />}
+            titulo={
+              <span className="flex items-center gap-1.5">
+                {h.nombre}
+                {h.alergias.length > 0 && <Icon name="warning" className="text-base text-error" />}
+              </span>
+            }
+            detalle={[edad(h.nacimiento), h.peso && `${h.peso} kg`, h.grupoSanguineo].filter(Boolean).join(' · ')}
+            derecha={<Icon name="chevron_right" className="text-on-surface-variant" />}
+          />
         ))}
+        <Fila to="/hijo/nuevo" className="text-primary" izquierda={<Icon name="add" className="w-10 text-center" />} titulo="Agregar un hijo" />
+      </Lista>
 
-        <Link
-          to="/hijo/nuevo"
-          className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-outline-variant bg-surface-low py-2.5 text-primary font-semibold text-sm"
-        >
-          <Icon name="add" />
-          Agregar un hijo
-        </Link>
-      </div>
-
-      <h2 className="text-lg font-bold mt-5 mb-2">Registro rápido</h2>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2 mb-6">
         {[
-          { to: '/sintomas/nuevo', icono: 'thermostat', texto: 'Síntoma', tono: 'bg-tertiary-fixed text-tertiary' },
-          { to: '/visitas/nueva', icono: 'stethoscope', texto: 'Visita', tono: 'bg-primary-fixed text-primary' },
-          { to: '/tratamientos?rescate=1', icono: 'medication', texto: 'Rescate', tono: 'bg-secondary-container text-on-secondary-container' },
-          { to: '/documento', icono: 'document_scanner', texto: 'Documento', tono: 'bg-primary-container text-white' },
+          { to: '/sintomas/nuevo', icono: 'thermostat', texto: 'Síntoma' },
+          { to: '/visitas/nueva', icono: 'stethoscope', texto: 'Visita' },
+          { to: '/tratamientos?rescate=1', icono: 'medication', texto: 'Rescate' },
+          { to: '/documento', icono: 'document_scanner', texto: 'Documento' },
         ].map((a) => (
-          <Link key={a.to} to={a.to} className="bg-surface-lowest rounded-2xl shadow-soft py-2.5 px-1 flex flex-col items-center gap-1 font-semibold text-xs">
-            <span className={`w-10 h-10 rounded-full flex items-center justify-center ${a.tono}`}>
+          <Link key={a.to} to={a.to} className="flex flex-col items-center gap-1 text-xs font-medium text-on-surface-variant py-1">
+            <span className="w-12 h-12 rounded-full bg-surface-lowest text-primary flex items-center justify-center">
               <Icon name={a.icono} />
             </span>
             {a.texto}
@@ -133,14 +79,10 @@ export default function Inicio() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mt-2">
-        <Link to="/sintomas" className="bg-surface-lowest rounded-2xl shadow-soft px-3 py-2.5 flex items-center gap-2 font-semibold text-sm">
-          <Icon name="history" className="text-primary" /> Historial de síntomas
-        </Link>
-        <Link to="/configuracion" className="bg-surface-lowest rounded-2xl shadow-soft px-3 py-2.5 flex items-center gap-2 font-semibold text-sm">
-          <Icon name="settings" className="text-primary" /> Ajustes y respaldo
-        </Link>
-      </div>
+      <Lista>
+        <Fila to="/sintomas" titulo="Historial de síntomas" derecha={<Icon name="chevron_right" className="text-on-surface-variant" />} />
+        <Fila to="/configuracion" titulo="Ajustes y respaldo" derecha={<Icon name="chevron_right" className="text-on-surface-variant" />} />
+      </Lista>
     </Pagina>
   )
 }

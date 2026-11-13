@@ -44,30 +44,25 @@ export function DosisPendientes({ hijoId, mostrarNombre = false }) {
       {lista.map(({ t, turno }) => {
         const hijo = hijos.find((h) => h.id === t.hijoId)
         return (
-          <div key={t.id} className="rounded-2xl bg-tertiary-fixed p-3 shadow-soft">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-surface-lowest text-tertiary flex items-center justify-center shrink-0">
-                <Icon name="notifications_active" fill className="text-lg" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold uppercase tracking-wider text-tertiary">Dosis de las {hora(turno)}</div>
-                <div className="font-semibold leading-snug">
-                  {mostrarNombre && hijo ? `${hijo.nombre}: ` : ''}
-                  {t.medicamento} · {t.dosis}
-                </div>
+          <div key={t.id} className="rounded-2xl bg-tertiary-fixed pl-4 pr-2 py-2 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-tertiary">Dosis de las {hora(turno)}</div>
+              <div className="font-medium leading-snug truncate">
+                {mostrarNombre && hijo ? `${hijo.nombre}: ` : ''}
+                {t.medicamento} {t.dosis}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <button onClick={() => registrarToma(t.id, turno)} className="min-h-10 rounded-full bg-primary text-white font-semibold text-sm flex items-center justify-center gap-1.5">
-                <Icon name="check" /> Tomada
-              </button>
-              <button
-                onClick={() => actualizarTratamiento(t.id, { pospuesto: pospuesto(turno) })}
-                className="min-h-10 rounded-full bg-surface-lowest text-primary font-semibold text-sm flex items-center justify-center gap-1.5"
-              >
-                <Icon name="snooze" /> Posponer {POSPONER_MIN} min
-              </button>
-            </div>
+            <button
+              onClick={() => actualizarTratamiento(t.id, { pospuesto: pospuesto(turno) })}
+              className="w-10 h-10 rounded-full text-tertiary flex items-center justify-center shrink-0"
+              aria-label={`Posponer ${POSPONER_MIN} minutos`}
+              title={`Posponer ${POSPONER_MIN} min`}
+            >
+              <Icon name="snooze" />
+            </button>
+            <button onClick={() => registrarToma(t.id, turno)} className="min-h-10 px-4 rounded-full bg-primary text-white font-semibold text-sm flex items-center gap-1 shrink-0">
+              <Icon name="check" className="text-lg" /> Tomada
+            </button>
           </div>
         )
       })}
@@ -77,7 +72,7 @@ export function DosisPendientes({ hijoId, mostrarNombre = false }) {
 
 function Banner({ icono, titulo, texto, accion, onCerrar }) {
   return (
-    <div className="rounded-2xl bg-surface-lowest shadow-soft p-3 mb-3 flex gap-3 items-start">
+    <div className="rounded-2xl bg-surface-lowest p-3 mb-3 flex gap-3 items-start">
       <span className="w-9 h-9 rounded-full bg-primary-fixed text-primary flex items-center justify-center shrink-0">
         <Icon name={icono} />
       </span>

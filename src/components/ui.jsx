@@ -138,7 +138,7 @@ export function Pagina({ titulo, subtitulo, volver = false, children, accion }) 
 
 export function Card({ children, className = '', ...props }) {
   return (
-    <div className={`bg-surface-lowest rounded-2xl shadow-soft p-4 ${className}`} {...props}>
+    <div className={`bg-surface-lowest rounded-2xl p-4 ${className}`} {...props}>
       {children}
     </div>
   )
@@ -147,9 +147,9 @@ export function Card({ children, className = '', ...props }) {
 export function Seccion({ icono, titulo, accion, children, className = '' }) {
   return (
     <section className={`mb-5 ${className}`}>
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          {icono && <Icon name={icono} className="text-primary" />}
+      <div className="flex items-center justify-between mb-1.5 px-1 min-h-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant font-sans flex items-center gap-1.5">
+          {icono && <Icon name={icono} className="text-base" />}
           {titulo}
         </h2>
         {accion}
@@ -211,7 +211,7 @@ export function Chip({ activo, children, onClick, className = '' }) {
       type="button"
       onClick={onClick}
       className={`min-h-9 px-3.5 rounded-full text-sm font-semibold whitespace-nowrap transition ${
-        activo ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'
+        activo ? 'bg-primary text-white' : 'bg-surface-lowest text-on-surface-variant'
       } ${className}`}
     >
       {children}
@@ -239,21 +239,54 @@ export function Interruptor({ activo, onChange, etiqueta, detalle, className = '
   )
 }
 
-const estilosEstado = {
-  activo: 'bg-secondary-container text-on-secondary-container',
-  por_vencer: 'bg-tertiary-fixed text-tertiary',
-  vencido: 'bg-error-container text-on-error-container',
-  pendiente: 'bg-primary-fixed text-primary',
-  finalizado: 'bg-surface-highest text-on-surface-variant',
+const puntoEstado = {
+  activo: 'bg-secondary',
+  por_vencer: 'bg-tertiary-fixed-dim',
+  vencido: 'bg-error',
+  pendiente: 'bg-primary-fixed-dim',
+  finalizado: 'bg-outline-variant',
 }
 
+// Estado en texto con un punto de color: sin pastillas de fondo, para no recargar
 export function EtiquetaEstado({ estado }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs whitespace-nowrap shrink-0 font-semibold ${estilosEstado[estado.clave]}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-on-surface-variant whitespace-nowrap shrink-0">
+      <span className={`w-2 h-2 rounded-full ${puntoEstado[estado.clave]}`} />
       {estado.texto}
     </span>
   )
+}
+
+// Lista plana con separadores: el bloque básico de las pantallas
+export function Lista({ children, className = '' }) {
+  return <div className={`bg-surface-lowest rounded-2xl divide-y divide-surface-high overflow-hidden ${className}`}>{children}</div>
+}
+
+export function Fila({ titulo, detalle, izquierda, derecha, onClick, to, className = '' }) {
+  const contenido = (
+    <>
+      {izquierda}
+      <div className="flex-1 min-w-0">
+        <div className="font-medium leading-snug">{titulo}</div>
+        {detalle && <div className="text-sm text-on-surface-variant leading-snug">{detalle}</div>}
+      </div>
+      {derecha}
+    </>
+  )
+  const clases = `w-full flex items-center gap-3 px-4 py-3 text-left min-h-12 ${className}`
+  if (to)
+    return (
+      <Link to={to} className={clases}>
+        {contenido}
+      </Link>
+    )
+  if (onClick)
+    return (
+      <button type="button" onClick={onClick} className={clases}>
+        {contenido}
+      </button>
+    )
+  return <div className={clases}>{contenido}</div>
 }
 
 export function Aviso({ children }) {
