@@ -1,98 +1,132 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Avatar, Fab, Icon, Pagina, Vacio } from '../components/ui'
+import { Chip, Fab, Icon, Lista, Pagina, Vacio } from '../components/ui'
 import { useStore } from '../data/store'
-import { haceCuanto } from '../data/fechas'
+import { diaHora, fechaCorta } from '../data/fechas'
 
-const ICONOS = { Fiebre: 'thermostat', Tos: 'sentiment_dissatisfied', Mocos: 'humidity_high', Vómito: 'sick', Diarrea: 'gastroenterology', Dolor: 'healing', Sarpullido: 'water_drop', Otro: 'help' }
+const grados = (t) => `${String(t).replace('.', ',')} °C`
+// Antes cada síntoma tenía un solo tipo (`etiqueta`); ahora puede tener varios
+const tiposDe = (s) => s.etiquetas ?? (s.etiqueta ? [s.etiqueta] : [])
+export const nombreSintoma = (s) => tiposDe(s).join(', ') || 'Síntoma'
+// Síntomas guardados antes de permitir varias medicaciones tienen `medicacion` (una sola)
+const medsDe = (r) => r.medicaciones ?? (r.medicacion ? [r.medicacion] : [])
 
-function TarjetaSintoma({ s }) {
-  const { eliminarSintoma } = useStore()
-  const [confirmar, setConfirmar] = useState(false)
+// El síntoma y lo que se le fue agregando, en orden de fecha
+const lineaDeTiempo = (s) =>
+  [{ id: 'inicio', fecha: s.fecha, temperatura: s.temperatura, saturacion: s.saturacion, nota: s.descripcion, medicaciones: medsDe(s) }, ...(s.registros ?? [])].sort((a, b) =>
+    a.fecha.localeCompare(b.fecha),
+  )
+
+function Registro({ r }) {
+  const meds = medsDe(r)
   return (
-    <div className="bg-surface-container rounded-3xl p-5">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-sm text-on-surface-variant">{haceCuanto(s.fecha)}</span>
-        <span className="flex items-center gap-1 bg-surface-lowest rounded-full px-3 py-1 text-sm font-medium">
-          <Icon name={ICONOS[s.etiqueta] ?? 'help'} className="text-base text-tertiary" /> {s.etiqueta}
-          {s.temperatura ? ` · ${String(s.temperatura).replace('.', ',')} °C` : ''}
-        </span>
+    <li className="relative pl-5 pb-3 last:pb-0">
+      <span className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-primary" />
+      <div className="text-xs font-semibold text-on-surface-variant">
+        {diaHora(r.fecha)}
+        {r.temperatura ? <span className="text-on-surface"> · {grados(r.temperatura)}</span> : null}
+        {r.saturacion ? <span className="text-on-surface"> · Sat. {r.saturacion} %</span> : null}
       </div>
-      <p>{s.descripcion}</p>
-      {s.medicacion && (
-        <p className="text-sm text-on-surface-variant mt-2 flex items-center gap-1">
-          <Icon name="medication" className="text-base" /> {s.medicacion.medicamento} {s.medicacion.dosis}
-        </p>
-      )}
-      <div className="flex justify-end mt-1 -mb-2">
-        {confirmar ? (
-          <div className="flex gap-2">
-            <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-surface-lowest">
-              Cancelar
-            </button>
-            <button onClick={() => eliminarSintoma(s.id)} className="px-4 min-h-10 rounded-full text-sm font-semibold bg-error text-white">
-              Eliminar
-            </button>
+      {r.nota && <p className="whitespace-pre-line">{r.nota}</p>}
+      {meds.map((m, i) => (
+        <div key={i} className="flex items-center gap-1 text-on-surface-variant">
+          <Icon name="medication" className="text-base" /> {m.medicamento} {m.dosis}
+          {m.hora && ` · ${m.hora}`}
+        </div>
+      ))}
+    </li>
+  )
+}
+
+function FilaSintoma({ s, hijo, mostrarHijo }) {
+  const { eliminarSintoma } = useStore()
+  const [abierta, setAbierta] = useState(false)
+  const [confirmar, setConfirmar] = useState(false)
+  const linea = lineaDeTiempo(s)
+  const ultimaTemp = linea.findLast((r) => r.temperatura)?.temperatura
+  const meds = linea.flatMap(medsDe)
+  const tipos = tiposDe(s)
+  const titulo = tipos.join(', ') || s.descripcion || (s.temperatura ? `Temperatura ${grados(s.temperatura)}` : 'Síntoma')
+  const [dia, mes] = fechaCorta(s.fecha).split(' ')
+  const detalle = [
+    tipos.length > 0 && ultimaTemp && grados(ultimaTemp),
+    meds.length > 0 && [...new Set(meds.map((m) => m.medicamento))].join(', '),
+    linea.length > 1 && `${linea.length} registros`,
+    mostrarHijo && hijo?.nombre,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  return (
+    <div>
+      <button onClick={() => setAbierta((a) => !a)} className="w-full flex items-center gap-3 px-4 py-3 text-left min-h-14">
+        <div className="w-10 text-center shrink-0">
+          <div className="text-lg font-semibold leading-none">{dia}</div>
+          <div className="text-[11px] text-on-surface-variant uppercase">{mes.replace('.', '')}</div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium leading-snug truncate">{titulo}</div>
+          {detalle && <div className="text-sm text-on-surface-variant truncate">{detalle}</div>}
+        </div>
+        <Icon name={abierta ? 'expand_less' : 'expand_more'} className="text-on-surface-variant shrink-0" />
+      </button>
+
+      {abierta && (
+        <div className="px-4 pb-3 pl-[4.25rem] text-sm">
+          <ol className="border-l border-surface-high -ml-[1px]">
+            {linea.map((r) => (
+              <Registro key={r.id} r={r} />
+            ))}
+          </ol>
+          <div className="flex justify-between items-center pt-2">
+            <Link to={`/sintomas/${s.id}/agregar`} className="font-semibold text-primary flex items-center gap-1 min-h-10">
+              <Icon name="add" /> Agregar
+            </Link>
+            {confirmar ? (
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmar(false)} className="px-4 min-h-10 rounded-full font-semibold bg-surface-container">
+                  Cancelar
+                </button>
+                <button onClick={() => eliminarSintoma(s.id)} className="px-4 min-h-10 rounded-full font-semibold bg-error text-white">
+                  Eliminar
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmar(true)} className="font-semibold text-on-surface-variant flex items-center gap-1 min-h-10">
+                <Icon name="delete" /> Eliminar
+              </button>
+            )}
           </div>
-        ) : (
-          <button onClick={() => setConfirmar(true)} className="text-on-surface-variant w-10 h-10 flex items-center justify-center" aria-label="Eliminar síntoma">
-            <Icon name="delete" />
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default function Sintomas() {
-  const { hijos, sintomas } = useStore()
-  const ordenados = [...sintomas].sort((a, b) => b.fecha.localeCompare(a.fecha))
-  // El síntoma más reciente de las últimas 6 horas se destaca arriba
-  const activo = ordenados.find((s) => Date.now() - new Date(s.fecha).getTime() < 6 * 3600_000)
-  const hijoActivo = activo && hijos.find((h) => h.id === activo.hijoId)
+  const { hijoActivo: h, hijos, sintomas } = useStore()
+  const [todos, setTodos] = useState(false)
+  const lista = sintomas.filter((s) => todos || s.hijoId === h.id).sort((a, b) => b.fecha.localeCompare(a.fecha))
 
   return (
-    <Pagina titulo="Historial de síntomas" subtitulo="Lo que fuiste observando, por hijo." volver accion={<Fab to="/sintomas/nuevo" etiqueta="Registrar síntoma" />}>
-      {activo && (
-        <div className="relative overflow-hidden rounded-3xl bg-primary-container text-white p-5 mb-8 shadow-float">
-          <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full border-[24px] border-white/10" />
-          <div className="flex items-center gap-3 mb-3">
-            <span className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
-              <Icon name={ICONOS[activo.etiqueta] ?? 'help'} />
-            </span>
-            <div className="flex-1">
-              <div className="font-semibold">{hijoActivo?.nombre}</div>
-              <div className="text-sm opacity-90">{haceCuanto(activo.fecha)}</div>
-            </div>
-            <span className="bg-error text-white text-xs font-bold rounded-full px-3 py-1">{activo.etiqueta}</span>
-          </div>
-          {activo.temperatura && <div className="font-display text-4xl font-bold mb-1">{activo.temperatura.toString().replace('.', ',')} °C</div>}
-          <p className="opacity-95">{activo.descripcion}</p>
-          <Link to="/sintomas/nuevo" className="mt-4 flex items-center justify-center gap-2 min-h-12 rounded-full bg-white text-primary font-semibold">
-            <Icon name="add_task" /> Actualizar
-          </Link>
+    <Pagina titulo="Síntomas" subtitulo={todos ? 'De toda la familia' : `De ${h.nombre}`} volver accion={<Fab to="/sintomas/nuevo" etiqueta="Registrar síntoma" />}>
+      {hijos.length > 1 && (
+        <div className="flex gap-1.5 mb-3">
+          <Chip activo={todos} onClick={() => setTodos((t) => !t)}>
+            Todos los hijos
+          </Chip>
         </div>
       )}
 
-      {ordenados.length === 0 && <Vacio icono="thermostat" titulo="Sin síntomas anotados" texto="Cuando algo te llame la atención, anotalo con el botón +." />}
-
-      {hijos.map((h) => {
-        const propios = ordenados.filter((s) => s.hijoId === h.id && s !== activo)
-        if (!propios.length) return null
-        return (
-          <section key={h.id} className="mb-6">
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar hijo={h} size="w-10 h-10" texto="text-base" />
-              <h2 className="font-display text-xl font-semibold">{h.nombre}</h2>
-            </div>
-            <div className="space-y-3">
-              {propios.map((s) => (
-                <TarjetaSintoma key={s.id} s={s} />
-              ))}
-            </div>
-          </section>
-        )
-      })}
+      {lista.length ? (
+        <Lista>
+          {lista.map((s) => (
+            <FilaSintoma key={s.id} s={s} hijo={hijos.find((x) => x.id === s.hijoId)} mostrarHijo={todos} />
+          ))}
+        </Lista>
+      ) : (
+        <Vacio icono="thermostat" titulo="Sin síntomas anotados" texto="Cuando algo te llame la atención, anotalo con el botón +." />
+      )}
     </Pagina>
   )
 }

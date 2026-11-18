@@ -25,6 +25,12 @@ export function fechaCorta(iso) {
   })
 }
 
+// "17 nov., 21:30"
+export function diaHora(iso) {
+  const d = new Date(iso)
+  return `${d.toLocaleDateString('es-UY', { day: 'numeric', month: 'short' })}, ${hora(iso)}`
+}
+
 export function mesAnio(iso) {
   return new Date(`${iso.slice(0, 10)}T12:00`).toLocaleDateString('es-UY', { month: 'long', year: 'numeric' })
 }

@@ -80,7 +80,6 @@ export default function Inicio() {
       </div>
 
       <Lista>
-        <Fila to="/sintomas" titulo="Historial de síntomas" derecha={<Icon name="chevron_right" className="text-on-surface-variant" />} />
         <Fila to="/configuracion" titulo="Ajustes y respaldo" derecha={<Icon name="chevron_right" className="text-on-surface-variant" />} />
       </Lista>
     </Pagina>

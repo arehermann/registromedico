@@ -184,11 +184,16 @@ export const sintomas = [
   {
     id: 's1',
     hijoId: 'h2',
-    fecha: haceHoras(0.3),
-    etiqueta: 'Fiebre',
+    fecha: haceHoras(5),
+    etiquetas: ['Fiebre', 'Tos'],
     temperatura: 38.6,
+    saturacion: 96,
     descripcion: 'Se despertó caliente y molesto. Le di paracetamol, revisar en una hora.',
-    medicacion: { medicamento: 'Paracetamol', dosis: '5 ml' },
+    medicaciones: [{ medicamento: 'Paracetamol', dosis: '5 ml', hora: '' }],
+    registros: [
+      { id: 'r1', fecha: haceHoras(2), temperatura: 37.4, nota: 'Bajó la fiebre, comió un poco.', medicaciones: [] },
+      { id: 'r2', fecha: haceHoras(0.3), temperatura: 38.9, nota: 'Volvió a subir.', medicaciones: [{ medicamento: 'Ibuprofeno', dosis: '7,5 ml', hora: '' }] },
+    ],
   },
   {
     id: 's2',
@@ -196,7 +201,7 @@ export const sintomas = [
     fecha: haceHoras(20),
     etiqueta: 'Tos',
     descripcion: 'Tos seca antes de dormir. Usó el inhalador y se calmó.',
-    medicacion: { medicamento: 'Salbutamol', dosis: '2 puffs' },
+    medicaciones: [{ medicamento: 'Salbutamol', dosis: '2 puffs', hora: '' }],
   },
   {
     id: 's3',
