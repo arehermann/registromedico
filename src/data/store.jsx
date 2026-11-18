@@ -111,6 +111,7 @@ export function StoreProvider({ children }) {
       actualizarTratamiento: (id, cambios) => actualizar('tratamientos', id, cambios),
       eliminarTratamiento: (id) => borrar('tratamientos', id),
       agregarSintoma: (campos) => crear('sintomas', 's', campos),
+      actualizarSintoma: (id, cambios) => actualizar('sintomas', id, cambios),
       eliminarSintoma: (id) => borrar('sintomas', id),
       agregarRescate: (campos) => crear('rescates', 'r', campos),
       registrarToma: (tratamientoId, turno) => crear('tomas', 'm', { tratamientoId, turno, fecha: ahora() }),

@@ -143,7 +143,22 @@ export default function App() {
                   </ConHijo>
                 }
               />
-              <Route path="/sintomas" element={<Sintomas />} />
+              <Route
+                path="/sintomas"
+                element={
+                  <ConHijo>
+                    <Sintomas />
+                  </ConHijo>
+                }
+              />
+              <Route
+                path="/sintomas/:id/agregar"
+                element={
+                  <ConHijo>
+                    <NuevoSintoma registro />
+                  </ConHijo>
+                }
+              />
               <Route
                 path="/sintomas/nuevo"
                 element={

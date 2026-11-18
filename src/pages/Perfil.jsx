@@ -160,6 +160,14 @@ export default function Perfil() {
           <Icon name="add_circle" className="text-2xl" />
           Agregar visita
         </Link>
+        <Link to="/sintomas" className="bg-surface-lowest shadow-soft rounded-2xl px-3 py-3 flex items-center gap-2 font-semibold text-sm">
+          <Icon name="thermostat" className="text-primary text-2xl" />
+          Síntomas
+        </Link>
+        <Link to="/sintomas/nuevo" className="bg-surface-lowest shadow-soft rounded-2xl px-3 py-3 flex items-center gap-2 font-semibold text-sm text-primary">
+          <Icon name="add_circle" className="text-2xl" />
+          Nuevo síntoma
+        </Link>
       </div>
     </Pagina>
   )
