@@ -38,13 +38,21 @@ La app está en GitHub Pages (https), así que el servidor también tiene que te
 - **Si ya publicás otras apps con un dominio** (Nginx, Caddy o Cloudflare Tunnel), agregá un
   subdominio, por ejemplo `famlog.tu-dominio.com`, que apunte a `http://localhost:8787`.
 - **Con Tailscale** (gratis). Esto no publica ninguna app, solo le da al servidor una dirección
-  https para que FamLog lo encuentre. Usá el puerto 8443 para no pisar otras apps que ya tengas
-  en el 443 (revisalas antes con `tailscale funnel status`):
+  https para que FamLog lo encuentre. **Antes de nada mirá qué tenés publicado**:
   ```bash
-  sudo tailscale funnel --bg --https=8443 http://127.0.0.1:8787
+  tailscale serve status
   ```
-  La dirección queda como `https://raspberrypi.tu-red.ts.net:8443`. Si los dos celulares ya tienen
-  Tailscale, podés usar `serve` en lugar de `funnel` y el servidor queda visible solo dentro de tu red.
+  Cada puerto (443, 8443, 10000) es una dirección distinta, y si le asignás FamLog a uno que ya
+  usa otra app, esa app deja de verse. Elegí un puerto que no aparezca en la lista; el 10000
+  suele estar libre. Si los dos celulares tienen Tailscale, usá `serve` (queda privado, solo
+  dentro de tu red):
+  ```bash
+  sudo tailscale serve --bg --https=10000 http://127.0.0.1:8787
+  ```
+  Si algún celular no tiene Tailscale, usá `funnel` en lugar de `serve` (queda visible en
+  internet, protegido por `FAMLOG_CLAVE`). La dirección queda como
+  `https://raspberrypi.tu-red.ts.net:10000`. Nunca uses `tailscale funnel 8787` sin `--https`,
+  porque toma el puerto 443.
 
 ## 4. Conectar la app
 
